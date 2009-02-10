@@ -730,15 +730,17 @@ function cfum_get_photo_url($author = 0) {
 function cfum_get_levels() {
 	$levels = maybe_unserialize(get_option('cfum_author_lvls'));
 	$return = array();
-	foreach ($levels as $level_key => $level) {
-		$list = cfum_get_list($level_key);
-		if (is_array($list)) {
-			$info = array(
-				'title' => $level['title'], 
-				'description' => $level['description'], 
-				'list' => $list
-			);
-			$return[$level_key] = $info;
+	if(is_array($levels)) {
+		foreach ($levels as $level_key => $level) {
+			$list = cfum_get_list($level_key);
+			if (is_array($list)) {
+				$info = array(
+					'title' => $level['title'], 
+					'description' => $level['description'], 
+					'list' => $list
+				);
+				$return[$level_key] = $info;
+			}
 		}
 	}
 	return $return;
