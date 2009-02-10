@@ -11,6 +11,25 @@ Author URI: http://crowdfavorite.com
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
 load_plugin_textdomain('cfum_author_lvl');
+$cfum_allowedtags = array(
+	'a' => array(
+			'href' => array(),
+			'title' => array(), 
+			'target' => array()
+	),
+	'abbr' => array(
+		'title' => array()
+	),
+	'acronym' => array(
+		'title' => array()
+	),
+	'code' => array(), 
+	'pre' => array(), 
+	'em' => array(),
+	'strong' => array(),
+	'p' => array(),
+	
+);
 
 /**
  * 
@@ -299,6 +318,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php') {
  */
 
 function cfum_options_form() {
+	global $cfum_allowedtags;
 	$levels = cfum_get_levels();
 	
 	if ( isset($_GET['cfum_message']) && $_GET['cfum_message'] = 'updated' ) {
@@ -318,7 +338,7 @@ function cfum_options_form() {
 						<h3 class="cfum_list_name">'.htmlspecialchars($level['title']).'</h3>
 						<div id="cfum-description">
 							<p>
-								<span class="description">'.__('Description: ','cfum_author_lvl').'</span>'.htmlspecialchars($level['description']).'
+								<span class="description">'.__('Description: ','cfum_author_lvl').'</span>'.wpautop(wptexturize(wp_kses(stripslashes($level['description']),$cfum_allowedtags))).'
 							</p>
 						</div>
 						<table class="widefat">
@@ -398,6 +418,7 @@ function cfum_options_form() {
 }
 
 function cfum_edit_form() {
+	global $cfum_allowedtags;
 	$cfum_author_lvls = cfum_get_levels();
 	
 	if ( isset($_GET['cfum_message']) && $_GET['cfum_message'] = 'updated' ) {
@@ -429,7 +450,7 @@ function cfum_edit_form() {
 									<tr>
 										<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
 										<td width="300px"><input type="text" name="cfum_author_lvls['.$key.'][title]" size="30" value="'.htmlspecialchars($level['title']).'" /></td>
-										<td><textarea rows="2" style="width:100%;" name="cfum_author_lvls['.$key.'][description]">'.htmlspecialchars($level['description']).'</textarea></td>
+										<td><textarea rows="2" style="width:100%;" name="cfum_author_lvls['.$key.'][description]">'.wp_kses(stripslashes($level['description']),$cfum_allowedtags).'</textarea></td>
 										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$key.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteLevel(\''.$key.'\')" /></td>
 									</tr>
 								</table>
@@ -604,6 +625,7 @@ function cfum_update_author_list($lists = array()) {
  */
 
 function cfum_get_author_levels($key = '', $args = array()) {
+	global $cfum_allowedtags;
 	$return = '';
 	$defaults = array(
 		'show_list_title' => true,
@@ -641,7 +663,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 				if($show_list_description) {
 					$return .= '
 						<div id="cfum-author-lvl-'.$level_key.'-description">
-							'.wptexturize(wpautop($level['description'])).'
+							'.wpautop(wptexturize(wp_kses(stripslashes($level['description']),$cfum_allowedtags))).'
 						</div>
 					';
 				}
