@@ -61,13 +61,13 @@ function cfum_request_handler() {
 				case 'cfum_update_author_lvls':
 					if (isset($_POST['cfum_author_lvls']) && is_array($_POST['cfum_author_lvls'])) {
 						cfum_update_author_lvls($_POST['cfum_author_lvls']);
-						wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-lvls.php&cfum_page=edit&cfum_message=updated');
+						wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
 					}
 					break;
 				case 'cfum_update_author_lists':
 					if (isset($_POST['cfum_author_list']) && is_array($_POST['cfum_author_list'])) {
 						cfum_update_author_list($_POST['cfum_author_list']);
-						wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-lvls.php&cfum_page=main&cfum_message=updated');
+						wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
 					}
 					break;
 				default:
@@ -477,10 +477,10 @@ function cfum_nav($page = '') {
 	$cfum_nav .= '
 		<ul class="subsubsub">
 			<li>
-				<a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-lvls.php&cfum_page=main" '.$main_class.'>'.__('Lists','cfum_author_lvl').'</a> |
+				<a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main" '.$main_class.'>'.__('Lists','cfum_author_lvl').'</a> |
 			</li>
 			<li>
-				<a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-lvls.php&cfum_page=edit" '.$edit_class.'>'.__('List Types','cfum_author_lvl').'</a>
+				<a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit" '.$edit_class.'>'.__('List Types','cfum_author_lvl').'</a>
 			</li>
 		</ul>
 	';
@@ -724,7 +724,7 @@ function cfum_get_photo_url($author = 0) {
 		}
 		return get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']);
 	}
-	return get_bloginfo('wpurl').'/'.PLUGINDIR.'/cf-author-lvls/images/mystery.png';
+	return get_bloginfo('wpurl').'/'.PLUGINDIR.'/cf-author-levels/images/mystery.png';
 }
 
 function cfum_get_levels() {
