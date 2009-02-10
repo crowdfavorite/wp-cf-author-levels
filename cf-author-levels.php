@@ -59,16 +59,12 @@ function cfum_request_handler() {
 		if (!empty($_POST['cf_action'])) {
 			switch($_POST['cf_action']) {
 				case 'cfum_update_author_lvls':
-					if (isset($_POST['cfum_author_lvls']) && is_array($_POST['cfum_author_lvls'])) {
-						cfum_update_author_lvls($_POST['cfum_author_lvls']);
-						wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
-					}
+					cfum_update_author_lvls($_POST['cfum_author_lvls']);
+					wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
 					break;
 				case 'cfum_update_author_lists':
-					if (isset($_POST['cfum_author_list']) && is_array($_POST['cfum_author_list'])) {
-						cfum_update_author_list($_POST['cfum_author_list']);
-						wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
-					}
+					cfum_update_author_list($_POST['cfum_author_list']);
+					wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
 					break;
 				default:
 					break;
@@ -368,6 +364,16 @@ function cfum_options_form() {
 					');
 				}
 			}
+			else {
+				print('
+				<br /><br />
+				<div id="cfum-no-lists">
+					<p>
+						'.__('No lists have been created.  Go <a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit" '.$edit_class.'>here</a> to create new lists.','cfum_author_lvl').'
+					</p>
+				</div>
+				');
+			}
 			print('
 			</form>
 			');
@@ -416,7 +422,7 @@ function cfum_edit_form() {
 					</thead>
 				</table>
 				<ul id="cfum-list">');
-					if (is_array($cfum_author_lvls) > 0) {
+					if (is_array($cfum_author_lvls)) {
 						foreach ($cfum_author_lvls as $key => $level) {
 							print('<li id="listitem_'.$key.'">
 								<table class="widefat">
@@ -424,7 +430,7 @@ function cfum_edit_form() {
 										<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
 										<td width="300px"><input type="text" name="cfum_author_lvls['.$key.'][title]" size="30" value="'.htmlspecialchars($level['title']).'" /></td>
 										<td><textarea rows="2" style="width:100%;" name="cfum_author_lvls['.$key.'][description]">'.htmlspecialchars($level['description']).'</textarea></td>
-										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$key.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteLevel('.$key.')" /></td>
+										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$key.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteLevel(\''.$key.'\')" /></td>
 									</tr>
 								</table>
 							</li>');
@@ -574,23 +580,21 @@ add_action('profile_update', 'cfum_profile_edited_by_admin');
 
 function cfum_update_author_lvls($levels = array()) {
 	$data = array();
-	foreach ($levels as $key => $level) {
-		if (!empty($level['title'])) {
-			$data[sanitize_title($level['title'])] = array(
-				'title' => $level['title'],
-				'description' => $level['description'],
-			);
-		}
+	if(is_array($levels)) {
+		foreach ($levels as $key => $level) {
+			if (!empty($level['title'])) {
+				$data[sanitize_title($level['title'])] = array(
+					'title' => $level['title'],
+					'description' => $level['description'],
+				);
+			}
+		}	
 	}
-	if (is_array($data)) {
-		update_option('cfum_author_lvls', $data);
-	}
+	update_option('cfum_author_lvls', $data);
 }
 
 function cfum_update_author_list($lists = array()) {
-	if (is_array($lists)) {
-		update_option('cfum_author_lists', $lists);
-	}
+	update_option('cfum_author_lists', $lists);
 }
 
 /**
@@ -603,6 +607,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 	$return = '';
 	$defaults = array(
 		'show_list_title' => true,
+		'show_list_description' => false,
 		'list_before' => '<ul class="cfum-list cfum-list-'.$key.'">',
 		'list_after' => '</ul>',
 		'list_item_before' => '<li>',
@@ -610,7 +615,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 	);
 	$args = array_merge($defaults, $args);
 	extract($args, EXTR_SKIP);
-	
+
 	if (empty($key)) {
 		$levels = cfum_get_levels();
 	}
@@ -628,11 +633,18 @@ function cfum_get_author_levels($key = '', $args = array()) {
 						</div>
 					';
 				}
-				$return .= $before;
+				$return .= $list_before;
 				foreach ($level['list'] as $list_key => $author) {
 					$return .= $list_item_before.cfum_get_author_info($author,$args).$list_item_after;
 				}
-				$return .= $after;
+				$return .= $list_after;
+				if($show_list_description) {
+					$return .= '
+						<div id="cfum-author-lvl-'.$level_key.'-description">
+							'.wptexturize(wpautop($level['description'])).'
+						</div>
+					';
+				}
 				$return .= '</div>';
 			}
 		}
@@ -661,25 +673,27 @@ function cfum_get_author_info($author, $args = array()) {
 	$userdata = get_userdata($author);
 	$usermeta = get_usermeta($author, 'cfum_user_data');
 	$return .= '
-		<div class="aboutauthor aboutauthor-'.$author.'">
-			<div class="authordata authordata-'.$author.'">';
-				if($show_bio) {
-					$return .= '
-						<span class="authorbio authorbio-'.$author.'">
-							'.apply_filters('the_content','<div class="authorname authorname-'.$author.'">'.htmlspecialchars($userdata->display_name).': </div>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
-						</span>
-					';
-				}
-				if($show_link) {
-					$return .= '
-						<span class="authorlink authorlink-'.$author.'">
-							'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
-						</span>
-					';
-				}
-			$return .= '
-			</div>
-			';
+		<div class="aboutauthor aboutauthor-'.$author.'">';
+			if($show_bio || $show_link) {
+				$return .= '<div class="authordata authordata-'.$author.'">';
+			}
+			if($show_bio) {
+				$return .= '
+					<span class="authorbio authorbio-'.$author.'">
+						'.apply_filters('the_content','<div class="authorname authorname-'.$author.'">'.htmlspecialchars($userdata->display_name).': </div>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
+					</span>
+				';
+			}
+			if($show_link) {
+				$return .= '
+					<span class="authorlink authorlink-'.$author.'">
+						'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
+					</span>
+				';
+			}
+			if($show_bio || $show_link) {
+				$return .= '</div>';
+			}
 			if($show_image) {
 				$return .= '
 					<div class="authorimage authorimage-'.$author.'">
@@ -729,18 +743,17 @@ function cfum_get_photo_url($author = 0) {
 
 function cfum_get_levels() {
 	$levels = maybe_unserialize(get_option('cfum_author_lvls'));
-	$return = array();
-	if(is_array($levels)) {
-		foreach ($levels as $level_key => $level) {
+
+	$return = '';
+	foreach ($levels as $level_key => $level) {
+		if ($level_key != '') {
 			$list = cfum_get_list($level_key);
-			if (is_array($list)) {
-				$info = array(
-					'title' => $level['title'], 
-					'description' => $level['description'], 
-					'list' => $list
-				);
-				$return[$level_key] = $info;
-			}
+			$info = array(
+				'title' => $level['title'], 
+				'description' => $level['description'], 
+				'list' => $list
+			);
+			$return[$level_key] = $info;
 		}
 	}
 	return $return;
@@ -748,12 +761,14 @@ function cfum_get_levels() {
 
 function cfum_get_level($key = '') {
 	$levels = maybe_unserialize(get_option('cfum_author_lvls'));
-	if (!empty($key)) {
-		$levels = maybe_unserialize(get_option('cfum_author_lvls'));
-		$list = cfum_get_list($key);
-		if(!is_array($list)) { return ''; }
-		$levels[$key]['list'] = $list;
-		$return[$key] = $levels[$key];
+
+	if (!empty($key) && is_array($levels)) {
+		if ($levels[$key] != '') {
+			$list = cfum_get_list($key);
+			if (!is_array($list)) { return ''; }
+			$levels[$key]['list'] = $list;
+			$return[$key] = $levels[$key];
+		}
 	}
 	return $return;
 }
