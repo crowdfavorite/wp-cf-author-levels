@@ -360,13 +360,13 @@ function cfum_options_form() {
 							</td>
 						</tr>
 					</table>');
+					print('
+						<p class="submit" style="border-top: none;">
+							<input type="hidden" name="cf_action" value="cfum_update_author_lists" />
+							<input type="submit" class="button-primary button" name="submit" id="cfum-submit" value="'.__('Update Settings', 'cfum_author_lvl').'" />
+						</p>
+					');
 				}
-				print('
-					<p class="submit" style="border-top: none;">
-						<input type="hidden" name="cf_action" value="cfum_update_author_lists" />
-						<input type="submit" class="button-primary button" name="submit" id="cfum-submit" value="'.__('Update Settings', 'cfum_author_lvl').'" />
-					</p>
-				');
 			}
 			print('
 			</form>
