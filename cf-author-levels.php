@@ -599,8 +599,18 @@ function cfum_update_author_list($lists = array()) {
  * 
  */
 
-function cfum_get_author_levels($key = '') {
+function cfum_get_author_levels($key = '', $args = array()) {
 	$return = '';
+	$defaults = array(
+		'show_list_title' => true,
+		'list_before' => '<ul class="cfum-list cfum-list-'.$key.'">',
+		'list_after' => '</ul>',
+		'list_item_before' => '<li>',
+		'list_item_after' => '</li>',
+	);
+	$args = array_merge($defaults, $args);
+	extract($args, EXTR_SKIP);
+	
 	if (empty($key)) {
 		$levels = cfum_get_levels();
 	}
@@ -610,18 +620,20 @@ function cfum_get_author_levels($key = '') {
 	if (is_array($levels)) {
 		foreach ($levels as $level_key => $level) {
 			if (is_array($level['list'])) {
-				$return .= '<div id="cfum-author-lvl-'.$level_key.'">
+				$return .= '<div id="cfum-author-lvl-'.$level_key.'">';
+				if($show_list_title) {
+					$return .= '
 						<div id="cfum-author-lvl-'.$level_key.'-title">
 							'.htmlspecialchars($level['title']).'
 						</div>
-						<ul>
-						';
-						foreach ($level['list'] as $list_key => $author) {
-							$return .= '<li>'.cfum_get_author_info($author).'</li>';
-						}
-						$return .= '
-						</ul>
-					</div>';
+					';
+				}
+				$return .= $before;
+				foreach ($level['list'] as $list_key => $author) {
+					$return .= $list_item_before.cfum_get_author_info($author,$args).$list_item_after;
+				}
+				$return .= $after;
+				$return .= '</div>';
 			}
 		}
 	}
@@ -631,27 +643,56 @@ function cfum_get_author_levels($key = '') {
 	return $return;
 }
 
-function cfum_author_levels($key = '') {
-	echo cfum_get_author_levels($key);
+function cfum_author_levels($key = '',$args = array()) {
+	echo cfum_get_author_levels($key, $args);
 }
 
-function cfum_get_author_info($author) {
+function cfum_get_author_info($author, $args = array()) {
 	$return = '';
+	$defaults = array(
+		'show_bio' => true,
+		'show_link' => true,
+		'show_image' => true,		
+		'add_clear_div' => true,
+	);
+	$args = array_merge($defaults, $args);
+	extract($args, EXTR_SKIP);	
+	
 	$userdata = get_userdata($author);
 	$usermeta = get_usermeta($author, 'cfum_user_data');
 	$return .= '
-		<div class="aboutauthor">
-			<div class="authordata">
-				'.apply_filters('the_content','<div class="authorname">'.htmlspecialchars($userdata->display_name).': </div>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
-				<br /><br />
-				<span class="authorlink">
-					'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
-				</span>
+		<div class="aboutauthor aboutauthor-'.$author.'">
+			<div class="authordata authordata-'.$author.'">';
+				if($show_bio) {
+					$return .= '
+						<span class="authorbio authorbio-'.$author.'">
+							'.apply_filters('the_content','<div class="authorname authorname-'.$author.'">'.htmlspecialchars($userdata->display_name).': </div>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
+						</span>
+					';
+				}
+				if($show_link) {
+					$return .= '
+						<span class="authorlink authorlink-'.$author.'">
+							'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
+						</span>
+					';
+				}
+			$return .= '
 			</div>
-			<div class="authorimage">
-				<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />
-			</div>
-			<div class="clear"></div>
+			';
+			if($show_image) {
+				$return .= '
+					<div class="authorimage authorimage-'.$author.'">
+						<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />
+					</div>
+				';
+			}
+			if($add_clear_div) {
+				$return .= '
+					<div class="clear"></div>
+				';
+			}
+			$return .= '
 		</div>
 	';
 	return $return;
