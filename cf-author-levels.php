@@ -627,10 +627,13 @@ function cfum_update_author_list($lists = array()) {
 function cfum_get_author_levels($key = '', $args = array()) {
 	global $cfum_allowedtags;
 	$return = '';
+	if(!empty($key)) {
+		$ul_key = 'cfum-list-'.$key;
+	}
 	$defaults = array(
 		'show_list_title' => true,
 		'show_list_description' => false,
-		'list_before' => '<ul class="cfum-list cfum-list-'.$key.'">',
+		'list_before' => '<ul class="cfum-list '.$ul_key.'">',
 		'list_after' => '</ul>',
 		'list_item_before' => '<li>',
 		'list_item_after' => '</li>',
