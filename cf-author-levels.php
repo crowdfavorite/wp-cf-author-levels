@@ -767,15 +767,17 @@ function cfum_get_levels() {
 	$levels = maybe_unserialize(get_option('cfum_author_lvls'));
 
 	$return = '';
-	foreach ($levels as $level_key => $level) {
-		if ($level_key != '') {
-			$list = cfum_get_list($level_key);
-			$info = array(
-				'title' => $level['title'], 
-				'description' => $level['description'], 
-				'list' => $list
-			);
-			$return[$level_key] = $info;
+	if (is_array($levels)) {
+		foreach ($levels as $level_key => $level) {
+			if ($level_key != '') {
+				$list = cfum_get_list($level_key);
+				$info = array(
+					'title' => $level['title'], 
+					'description' => $level['description'], 
+					'list' => $list
+				);
+				$return[$level_key] = $info;
+			}
 		}
 	}
 	return $return;
