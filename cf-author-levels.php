@@ -652,11 +652,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 			if (is_array($level['list'])) {
 				$return .= '<div id="cfum-author-lvl-'.$level_key.'">';
 				if($show_list_title) {
-					$return .= '
-						<div id="cfum-author-lvl-'.$level_key.'-title">
-							'.htmlspecialchars($level['title']).'
-						</div>
-					';
+					$return .= '<h2 id="cfum-author-lvl-'.$level_key.'-title" class="cfum-author-lvl-title">'.htmlspecialchars($level['title']).'</h2>';
 				}
 				$return .= $list_before;
 				foreach ($level['list'] as $list_key => $author) {
@@ -699,32 +695,32 @@ function cfum_get_author_info($author, $args = array()) {
 	$usermeta = get_usermeta($author, 'cfum_user_data');
 	$return .= '
 		<div class="aboutauthor aboutauthor-'.$author.'">';
-			if($show_bio || $show_link) {
-				$return .= '<div class="authordata authordata-'.$author.'">';
-			}
-			if($show_bio) {
-				$return .= '
-					<span class="authorbio authorbio-'.$author.'">
-						'.apply_filters('the_content','<div class="authorname authorname-'.$author.'">'.htmlspecialchars($userdata->display_name).': </div>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
-					</span>
-				';
-			}
-			if($show_link) {
-				$return .= '
-					<span class="authorlink authorlink-'.$author.'">
-						'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
-					</span>
-				';
-			}
-			if($show_bio || $show_link) {
-				$return .= '</div>';
-			}
 			if($show_image) {
 				$return .= '
 					<div class="authorimage authorimage-'.$author.'">
 						<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />
 					</div>
 				';
+			}
+			if($show_bio || $show_link) {
+				$return .= '<div class="authordata authordata-'.$author.'">';
+			}
+			if($show_bio) {
+				$return .= '
+					<div class="authorbio authorbio-'.$author.'">
+						'.apply_filters('the_content','<h3 class="authorname authorname-'.$author.'">'.htmlspecialchars($userdata->display_name).'</h3>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
+					</div>
+				';
+			}
+			if($show_link) {
+				$return .= '
+					<p class="authorlink authorlink-'.$author.'">
+						'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
+					</p>
+				';
+			}
+			if($show_bio || $show_link) {
+				$return .= '</div>';
 			}
 			if($add_clear_div) {
 				$return .= '
