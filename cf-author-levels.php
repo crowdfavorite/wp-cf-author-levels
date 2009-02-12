@@ -647,6 +647,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 	else {
 		$levels = cfum_get_level($key);
 	}
+	$levels = apply_filters('cfum_get_author_levels_data',$levels);
 	if (is_array($levels)) {
 		foreach ($levels as $level_key => $level) {
 			if (is_array($level['list'])) {
@@ -673,6 +674,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 	else {
 		$return = 'Could not find author level: '.$key;
 	}
+	$return = apply_filters('cfum_get_author_levels',$return);
 	return $return;
 }
 
@@ -715,7 +717,7 @@ function cfum_get_author_info($author, $args = array()) {
 			if($show_link) {
 				$return .= '
 					<p class="authorlink authorlink-'.$author.'">
-						'.__('View all articles by ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.htmlspecialchars($userdata->display_name).'</a>
+						'.__('View all ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.__('articles by ','cfum_author_lvls').htmlspecialchars($userdata->display_name).'</a>
 					</p>
 				';
 			}
