@@ -700,7 +700,9 @@ function cfum_get_author_info($author, $args = array()) {
 			if($show_image) {
 				$return .= '
 					<div class="authorimage authorimage-'.$author.'">
-						<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />
+						<a href="'.get_author_posts_url($author).'">
+							<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />
+						</a>
 					</div>
 				';
 			}
