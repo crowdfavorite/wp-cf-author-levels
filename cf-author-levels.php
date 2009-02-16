@@ -687,7 +687,8 @@ function cfum_get_author_info($author, $args = array()) {
 	$defaults = array(
 		'show_bio' => true,
 		'show_link' => true,
-		'show_image' => true,		
+		'show_image' => true,
+		'show_image_link' => true,		
 		'add_clear_div' => true,
 	);
 	$args = array_merge($defaults, $args);
@@ -700,9 +701,15 @@ function cfum_get_author_info($author, $args = array()) {
 			if($show_image) {
 				$return .= '
 					<div class="authorimage authorimage-'.$author.'">
-						<a href="'.get_author_posts_url($author).'">
-							<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />
-						</a>
+					';
+						if ($show_image_link) {
+							$return .= '<a href="'.get_author_posts_url($author).'">';
+						}
+						$return .= '<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />';
+						if ($show_image_link) {
+							$return .= '</a>';
+						}
+				$return .= '
 					</div>
 				';
 			}
