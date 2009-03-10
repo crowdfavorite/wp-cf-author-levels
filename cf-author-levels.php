@@ -828,12 +828,10 @@ function cfum_links_filter($links) {
 			$author = $link_info['link'];
 			$userdata = get_userdata($author);
 			$usermeta = get_usermeta($author, 'cfum_user_data');
-			$links['data'][$key] = array(
-				'link' => $usermeta[sanitize_title(get_bloginfo('name')).'feedburner_link'],
-				'title' => $userdata->display_name,
-				'type' => 'url',
-				'cat_posts' => '',
-			);
+			$links['data'][$key]['link'] = $usermeta[sanitize_title(get_bloginfo('name')).'feedburner_link'];
+			$links['data'][$key]['href'] = $usermeta[sanitize_title(get_bloginfo('name')).'feedburner_link'];
+			$links['data'][$key]['title'] = $userdata->display_name;
+			$links['data'][$key]['type'] = 'rss';
 		}
 	}
 	return $links;
