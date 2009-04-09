@@ -75,15 +75,22 @@ function cfum_check_page() {
 
 function cfum_request_handler() {
 	if (current_user_can('manage_options')) {
+		$blogurl = '';
+		if (is_ssl()) {
+			$blogurl = str_replace('http://','https://',get_bloginfo('wpurl'));
+		}
+		else {
+			$blogurl = get_bloginfo('wpurl');
+		}				
 		if (!empty($_POST['cf_action'])) {
 			switch($_POST['cf_action']) {
 				case 'cfum_update_author_lvls':
 					cfum_update_author_lvls($_POST['cfum_author_lvls']);
-					wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
+					wp_redirect($blogurl.'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
 					break;
 				case 'cfum_update_author_lists':
 					cfum_update_author_list($_POST['cfum_author_list']);
-					wp_redirect(get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
+					wp_redirect($blogurl.'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
 					break;
 				default:
 					break;
@@ -331,7 +338,7 @@ function cfum_options_form() {
 	print('
 		<div class="wrap">
 			'.cfum_nav('main').'
-			<form action="'.get_bloginfo('url').'/wp-admin/options-general.php" method="post" id="cfum-main-form">');
+			<form action="" method="post" id="cfum-main-form">');
 			if (is_array($levels)) {
 				foreach ($levels as $level_key => $level) {
 					print('
@@ -431,7 +438,7 @@ function cfum_edit_form() {
 	print('
 		<div class="wrap">
 			'.cfum_nav('edit').'
-			<form action="'.get_bloginfo('url').'/wp-admin/options-general.php" method="post" id="cfum-edit-form">
+			<form action="" method="post" id="cfum-edit-form">
 				<table class="widefat">
 					<thead>
 						<tr>
