@@ -775,7 +775,7 @@ function cfum_get_photo_url($author = 0) {
 		if (strpos($url, 'http://') !== false) {
 			return htmlspecialchars($url);
 		}
-		if (file_exists(get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']))) {
+		if (file_exists(ABSPATH.'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']))) {
 			return get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']);
 		}
 	}
