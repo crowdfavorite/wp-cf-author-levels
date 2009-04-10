@@ -775,7 +775,9 @@ function cfum_get_photo_url($author = 0) {
 		if (strpos($url, 'http://') !== false) {
 			return htmlspecialchars($url);
 		}
-		return get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']);
+		if (file_exists(get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']))) {
+			return get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']);
+		}
 	}
 	return get_bloginfo('wpurl').'/'.PLUGINDIR.'/cf-author-levels/images/mystery.png';
 }
