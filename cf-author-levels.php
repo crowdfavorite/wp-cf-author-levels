@@ -623,7 +623,7 @@ function cfum_edit_form() {
 								<table class="widefat">
 									<tr>
 										<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
-										<td width="300px"><input type="text" name="cfum_author_lvls['.$key.'][title]" size="30" value="'.htmlspecialchars($level['title']).'" /></td>
+										<td width="300px"><input type="text" name="cfum_author_lvls['.$key.'][title]" size="30" value="'.htmlspecialchars($level['title']).'" /><br />Keyname: <code>'.htmlspecialchars($key).'</code></td>
 										<td><textarea rows="2" style="width:100%;" name="cfum_author_lvls['.$key.'][description]">'.wp_kses(stripslashes($level['description']),$cfum_allowedtags).'</textarea></td>
 										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$key.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteLevel(\''.$key.'\')" /></td>
 									</tr>
@@ -811,6 +811,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 		'list_after' => '</ul>',
 		'list_item_before' => '<li>',
 		'list_item_after' => '</li>',
+		'quiet' => false
 	);
 	$args = array_merge($defaults, $args);
 	extract($args, EXTR_SKIP);
@@ -846,7 +847,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 		}
 	}
 	else {
-		$return = 'Could not find author level: '.$key;
+		$return = ($quiet ? null : 'Could not find author level: '.$key);
 	}
 	$return = apply_filters('cfum_get_author_levels',$return);
 	return $return;
