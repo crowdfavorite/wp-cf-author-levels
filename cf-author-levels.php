@@ -872,7 +872,7 @@ function cfum_get_author_info($author, $args = array()) {
 	$userdata = get_userdata($author);
 	$usermeta = get_usermeta($author, 'cfum_user_data');
 	$return .= '
-		<div class="aboutauthor aboutauthor-'.$author.'">';
+		<div id="'.$userdata->user_nicename.'" class="aboutauthor aboutauthor-'.$author.'">';
 			if($show_image) {
 				$return .= '
 					<div class="authorimage authorimage-'.$author.'">
