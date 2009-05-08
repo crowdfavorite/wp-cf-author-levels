@@ -865,6 +865,8 @@ function cfum_get_author_info($author, $args = array()) {
 		'show_image' => true,
 		'show_image_link' => true,		
 		'add_clear_div' => true,
+		'author_title_before' => '<h3 class="authorname authorname-'.$author.'">',
+		'author_title_after' => '</h3>'
 	);
 	$args = array_merge($defaults, $args);
 	extract($args, EXTR_SKIP);	
@@ -888,16 +890,17 @@ function cfum_get_author_info($author, $args = array()) {
 					</div>
 				';
 			}
-			if($show_bio || $show_link) {
-				$return .= '<div class="authordata authordata-'.$author.'">';
-			}
-			if($show_bio) {
-				$return .= '
-					<div class="authorbio authorbio-'.$author.'">
-						'.apply_filters('the_content','<h3 class="authorname authorname-'.$author.'"><a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a></h3>'.$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']).'
-					</div>
-				';
-			}
+			$return .= '
+			<div class="authordata authordata-'.$author.'">
+				<div class="authorbio authorbio-'.$author.'">
+					'.$author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after.'
+					';
+				if($show_bio) {
+					$return .= apply_filters('the_content',$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']);
+				}
+			$return .= '
+				</div>
+			';
 			if($show_link) {
 				$return .= '
 					<p class="authorlink authorlink-'.$author.'">
@@ -905,9 +908,7 @@ function cfum_get_author_info($author, $args = array()) {
 					</p>
 				';
 			}
-			if($show_bio || $show_link) {
-				$return .= '</div>';
-			}
+			$return .= '</div>';
 			if($add_clear_div) {
 				$return .= '
 					<div class="clear"></div>
@@ -919,8 +920,8 @@ function cfum_get_author_info($author, $args = array()) {
 	return $return;
 }
 
-function cfum_author_info($author) {
-	echo cfum_get_author_info($author);
+function cfum_author_info($author,$args = array()) {
+	echo cfum_get_author_info($author,$args);
 }
 
 function cfum_get_authors_list_select() {
