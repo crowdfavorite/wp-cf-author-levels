@@ -860,6 +860,7 @@ function cfum_author_levels($key = '',$args = array()) {
 function cfum_get_author_info($author, $args = array()) {
 	$return = '';
 	$defaults = array(
+		'show_author_title' => true,
 		'show_bio' => true,
 		'show_link' => true,
 		'show_image' => true,
@@ -893,8 +894,10 @@ function cfum_get_author_info($author, $args = array()) {
 			$return .= '
 			<div class="authordata authordata-'.$author.'">
 				<div class="authorbio authorbio-'.$author.'">
-					'.$author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after.'
-					';
+				';
+				if ($show_author_title) {
+					$return .= $author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after;
+				}
 				if($show_bio) {
 					$return .= apply_filters('the_content',$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']);
 				}
