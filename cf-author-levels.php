@@ -53,7 +53,7 @@ $cfum_allowedtags = array(
 			}
 
 			// $id should look like {$id_base}-{$o}
-			$id = "cfum-widgets-$o"; // Never never never translate an id
+			$id = "cfum_widgets-$o"; // Never never never translate an id
 			$registered = true;
 			wp_register_sidebar_widget($id, $name, 'cfum_widgets', $widget_ops, array('number' => $o));
 			wp_register_widget_control($id, $name, 'cfum_widgets_control', $control_ops, array('number' => $o));
