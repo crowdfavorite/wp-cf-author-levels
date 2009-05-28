@@ -278,6 +278,9 @@ function cfum_request_handler() {
 			case 'cfum_admin_css':
 				cfum_admin_css();
 				break;
+			case 'cfum_admin_user_css':
+				cfum_admin_user_css();
+				break;
 		}
 	}
 	if (current_user_can('manage_options') && basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php') {
@@ -424,7 +427,38 @@ function cfum_admin_user_js() {
 	?>
 	jQuery(document).ready(function() {
 		jQuery("#description").parents('tr').attr("style","display:none;");
+		jQuery("a.cfum-use-this").click(function() {
+			var id = jQuery(this).attr('id').split('bio-');
+			var content = jQuery('#'+id[1]).html();
+			jQuery('#cfum-bio_ifr').contents().find('#tinymce').html(content);
+			return false;
+		});
+		jQuery("a.cfum-show-bio").click(function() {
+			var id = jQuery(this).attr('id').split('_');
+			var showhide = id[0];
+			var box_id = id[1];
+			
+			if (showhide == 'show') {
+				cfumShowBio(box_id);
+			}
+			else {
+				cfumHideBio(box_id);
+			}
+			return false;
+		});
 	});
+	function cfumShowBio(id) {
+		jQuery('#box-'+id).slideDown();
+		jQuery('#hide_'+id).attr('style','');
+		jQuery('#show_'+id).attr('style','display:none;');
+		return false;
+	}
+	function cfumHideBio(id) {
+		jQuery('#box-'+id).slideUp();
+		jQuery('#hide_'+id).attr('style','display:none;');
+		jQuery('#show_'+id).attr('style','');
+		return false;
+	}
 	//<![CDATA[
 		// must init what we want and run before the WordPress onPageLoad function.
 		// After this function redo the WordPress init so the main editor picks up the WordPress config. 
@@ -470,9 +504,38 @@ function cfum_admin_user_js() {
 	die();
 }
 
+function cfum_admin_user_css() {
+	header('Content-type: text/css');
+	?>
+	#cfum-bio-otherblog {
+		padding:20px;
+		border-top:1px solid #DFDFDF;
+	}
+	#cfum-bio-otherblog .cfum_alternate_bio {
+		display:none;
+		padding:0 10px 10px;
+	}
+	#cfum-bio-otherblog h3 {
+		margin-top:0;
+	}
+	#cfum-bio-otherblog h4 {
+		padding-bottom:5px;
+		margin:0;
+	}
+	#cfum-bio-otherblog h4 a {
+		font-size:10px;
+	}
+	#cfum-bio-otherblog a.cfum-use-this {
+		font-weight:bold;
+	}
+	<?php	
+	die();
+}
+
 function cfum_admin_user_head() {
 	echo '<script src="'.trailingslashit(get_bloginfo('url')).'/wp-includes/js/tinymce/tiny_mce.js" type="text/javascript"></script>';	
-	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js" type="text/javascript"></script>';	
+	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js" type="text/javascript"></script>';
+	echo '<link rel="stylesheet" type="text/css" href="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css" />';
 }
 if (basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') {
 	add_action('admin_head','cfum_admin_user_head');
@@ -710,8 +773,34 @@ function cfum_show_user_form_fields() {
 			<td>
 				<div style="clear:both">&nbsp;</div>
 					<div style="border: 1px solid #DFDFDF;">
-						<div id="cfum-bio_container">
+						<div id="cfum-bio-container">
 							<textarea id="cfum-bio" name="cfum-bio"><?php echo $user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio']; ?></textarea>
+						</div>
+						<div id="cfum-bio-otherblog">
+							<h3><?php _e('Would you like to use another blogs bio?','cfum_author_lvl'); ?></h3>
+							<?php
+							foreach($user_info as $key => $info) {
+								if (strstr($key,'-cfum-bio') !== false) {
+									$this_blog_key = sanitize_title(get_bloginfo('name')).'-cfum-bio';
+									if ($key != $this_blog_key) {
+										if (!empty($info)) {
+											?>
+											<h4 id="<?php echo $key; ?>-blog">
+												<?php echo str_replace('-cfum-bio','',$key); _e('\'s bio','cfum_author_lvl'); ?> <a href="#" class="cfum-show-bio" id="show_<?php echo $key; ?>"><?php _e('Show','cfum_author_lvl'); ?></a><a href="#" class="cfum-show-bio" id="hide_<?php echo $key; ?>" style="display:none;"><?php _e('Hide','cfum_author_lvl'); ?></a>
+											</h4>
+											<div id="box-<?php echo $key; ?>" class="cfum_alternate_bio">
+												<div id="<?php echo $key; ?>">
+													<?php echo $info; ?>
+												</div>
+												<br />
+												<a href="#" class="cfum-use-this" id="bio-<?php echo $key; ?>"><?php _e('Use this bio','cfum_author_lvl'); ?></a>
+											</div>
+											<?php
+										}
+									}
+								}
+							}
+							?>
 						</div>
 					</div>
 				<div style="clear:both">&nbsp;</div>
@@ -917,6 +1006,7 @@ function cfum_get_author_info($author, $args = array()) {
 					<div class="clear"></div>
 				';
 			}
+			$return = apply_filters('cfum_get_author_info_after',$return,$author);
 			$return .= '
 		</div>
 	';
