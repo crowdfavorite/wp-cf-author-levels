@@ -32,6 +32,34 @@ $cfum_allowedtags = array(
 	'p' => array()
 );
 
+// README HANDLING
+	add_action('admin_init','cfum_add_readme');
+
+	/**
+	 * Enqueue the readme function
+	 */
+	function cfum_add_readme() {
+		if(function_exists('cfreadme_enqueue')) {
+			cfreadme_enqueue('cf-author-levels','cfum_readme');
+		}
+	}
+	
+	/**
+	 * return the contents of the links readme file
+	 * replace the image urls with full paths to this plugin install
+	 *
+	 * @return string
+	 */
+	function cfum_readme() {
+		$file = realpath(dirname(__FILE__)).'/readme/README.txt';
+		if(is_file($file) && is_readable($file)) {
+			$markdown = file_get_contents($file);
+			$markdown = preg_replace('|!\[(.*?)\]\((.*?)\)|','![$1]('.WP_PLUGIN_URL.'/cf-author-levels/readme/$2)',$markdown);
+			return $markdown;
+		}
+		return null;
+	}
+
 // Widget
 
 // Author Widget
