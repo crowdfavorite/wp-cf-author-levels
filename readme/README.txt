@@ -57,13 +57,14 @@
 
 #### Display Author Lists
 
-- To display author lists on the front end of the site, Template tags must be added to the theme.  
-- To display all of the author lists
+To display author lists on the front end of the site, Template tags must be added to the theme.  
+
+Example: To display all of the author lists
 
 <div><?php echo cfum_get_levels(); ?></div>
 
-- To display a single list of authors
+Example: To display a single list of authors
 
 <div><?php echo cfum_get_level('list-key-here'); ?></div>
 
-- To get the list key, navigate to the List Types page, under the Name of the list will be the key
+To get the list key, navigate to the List Types page, under the Name of the list will be the key
