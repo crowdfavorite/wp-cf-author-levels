@@ -902,11 +902,21 @@ function cfum_update_author_lvls($levels = array()) {
 			}
 		}	
 	}
-	update_option('cfum_author_lvls', $data);
+	if (!get_option('cfum_author_lvls')) {
+		add_option('cfum_author_lvls', $data, false, 'no');
+	}
+	else {
+		update_option('cfum_author_lvls',$data);
+	}
 }
 
 function cfum_update_author_list($lists = array()) {
-	update_option('cfum_author_lists', $lists);
+	if (!get_option('cfum_author_lists')) {
+		add_option('cfum_author_lists', $lists, false, 'no');
+	}
+	else {
+		update_option('cfum_author_lists',$lists);
+	}
 }
 
 /**
