@@ -34,7 +34,7 @@ $cfum_allowedtags = array(
 
 // README HANDLING
 	add_action('admin_init','cfum_add_readme');
-
+	
 	/**
 	 * Enqueue the readme function
 	 */
@@ -521,10 +521,9 @@ function cfum_admin_user_js() {
 			entities:"38,amp,60,lt,62,gt", 
 			accessibility_focus:"1", 
 			tab_focus:":prev,:next", 
-			content_css:"'.get_bloginfo('wpurl').'/wp-includes/js/tinymce/wordpress.css", 
 			save_callback:"", 
 			wpeditimage_disable_captions:"", 
-			plugins:"safari,inlinepopups,spellchecker,paste"
+			plugins:"safari,inlinepopups,spellchecker,paste,wordpress,media,fullscreen,wpeditimage,wpgallery,tabfocus"
 		});
 	<?php
 	die();
@@ -561,6 +560,7 @@ function cfum_admin_user_css() {
 
 function cfum_admin_user_head() {
 	echo '<script src="'.trailingslashit(get_bloginfo('url')).'/wp-includes/js/tinymce/tiny_mce.js" type="text/javascript"></script>';	
+	echo '<script src="'.trailingslashit(get_bloginfo('url')).'/wp-includes/js/tinymce/langs/wp-langs-en.js" type="text/javascript"></script>';	
 	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js" type="text/javascript"></script>';
 	echo '<link rel="stylesheet" type="text/css" href="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css" />';
 }
