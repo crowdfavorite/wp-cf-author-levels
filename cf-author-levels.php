@@ -487,6 +487,45 @@ function cfum_admin_user_js() {
 		jQuery('#show_'+id).attr('style','');
 		return false;
 	}
+	// must init what we want and run before the WordPress onPageLoad function.
+	// After this function redo the WordPress init so the main editor picks up the WordPress config. 
+	// that is the only way I could get this to work.
+	tinyMCE.init({
+			mode:"exact",
+			elements:"cfum-bio", 
+			onpageload:"", 
+			width:"100%", 
+			theme:"advanced", 
+			skin:"wp_theme", 
+			theme_advanced_buttons1:"bold,italic,underline,|,bullist,numlist,blockquote,|,justifyleft,justifycenter,justifyright,|,link,unlink,|,charmap,spellchecker,code,wp_help", 
+			theme_advanced_buttons2:"", 
+			theme_advanced_buttons3:"", 
+			theme_advanced_buttons4:"", 
+			language:"en", 
+			spellchecker_languages:"+English=en,Danish=da,Dutch=nl,Finnish=fi,French=fr,German=de,Italian=it,Polish=pl,Portuguese=pt,Spanish=es,Swedish=sv", 
+			theme_advanced_toolbar_location:"top", 
+			theme_advanced_toolbar_align:"left", 
+			theme_advanced_statusbar_location:"bottom", 
+			theme_advanced_resizing:true, 
+			theme_advanced_resize_horizontal:"", 
+			dialog_type:"modal", 
+			relative_urls:"", 
+			remove_script_host:"", 
+			convert_urls:"", 
+			apply_source_formatting:"", 
+			remove_linebreaks:"1", 
+			paste_convert_middot_lists:"1", 
+			paste_remove_spans:"1", 
+			paste_remove_styles:"1", 
+			gecko_spellcheck:"1", 
+			entities:"38,amp,60,lt,62,gt", 
+			accessibility_focus:"1", 
+			tab_focus:":prev,:next", 
+			content_css:"'.get_bloginfo('wpurl').'/wp-includes/js/tinymce/wordpress.css", 
+			save_callback:"", 
+			wpeditimage_disable_captions:"", 
+			plugins:"safari,inlinepopups,spellchecker,paste"
+		});
 	<?php
 	die();
 }
@@ -515,11 +554,13 @@ function cfum_admin_user_css() {
 	#cfum-bio-otherblog a.cfum-use-this {
 		font-weight:bold;
 	}
+	
 	<?php	
 	die();
 }
 
 function cfum_admin_user_head() {
+	echo '<script src="'.trailingslashit(get_bloginfo('url')).'/wp-includes/js/tinymce/tiny_mce.js" type="text/javascript"></script>';	
 	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js" type="text/javascript"></script>';
 	echo '<link rel="stylesheet" type="text/css" href="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css" />';
 }
