@@ -1079,7 +1079,7 @@ function cfum_get_photo_url($author = 0) {
 			return get_bloginfo('wpurl').'/wp-content/author-photos/'.htmlspecialchars($userinfo['photo_url']);
 		}
 	}
-	return get_bloginfo('wpurl').'/'.PLUGINDIR.'/cf-author-levels/images/mystery.png';
+	return apply_filters('cfum-get-author-photo',get_bloginfo('wpurl').'/'.PLUGINDIR.'/cf-author-levels/images/mystery.png');
 }
 
 function cfum_get_levels($include_users=true) {
