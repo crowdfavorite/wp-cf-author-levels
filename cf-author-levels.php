@@ -623,7 +623,7 @@ function cfum_options_form() {
 								<table class="widefat">
 									<tr>
 										<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
-										<td>'.htmlspecialchars($userdata->display_name).'</td>
+										<td><a href="'.esc_url("user-edit.php?user_id=$userdata->ID").'">'.htmlspecialchars($userdata->display_name).'</a></td>
 										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$author.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteAuthor(\''.$level_key.'\',\''.$author_key.'\')" /></td>
 										<input type="hidden" value="'.$author.'" name="cfum_author_list['.$level_key.'][]" />
 									</tr>
