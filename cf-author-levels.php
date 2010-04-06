@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.1
+Version: 1.2
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -11,6 +11,9 @@ Author URI: http://crowdfavorite.com
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
 load_plugin_textdomain('cfum_author_lvl');
+
+define('CFUM_VERSION', '1.2');
+
 $cfum_allowedtags = array(
 	'a' => array(
 			'href' => array(),
@@ -234,12 +237,13 @@ $cfum_allowedtags = array(
 
 function cfum_menu_items() {
 	if (current_user_can('manage_options')) {
-		add_options_page(
-			__('CF Author Levels','cfum_author_lvl')
-			, __('CF Author Levels','cfum_author_lvl')
-			, 10
-			, basename(__FILE__)
-			, 'cfum_check_page'
+		add_submenu_page(
+			'users.php',
+			__('CF Author Levels', 'cfum_author_lvl'),
+			__('CF Author Levels', 'cfum_author_lvl'),
+			10,
+			basename(__FILE__),
+			'cfum_check_page'
 		);
 	}
 }
@@ -281,11 +285,11 @@ function cfum_request_handler() {
 			switch($_POST['cf_action']) {
 				case 'cfum_update_author_lvls':
 					cfum_update_author_lvls($_POST['cfum_author_lvls']);
-					wp_redirect($blogurl.'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
+					wp_redirect($blogurl.'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
 					break;
 				case 'cfum_update_author_lists':
 					cfum_update_author_list($_POST['cfum_author_list']);
-					wp_redirect($blogurl.'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
+					wp_redirect($blogurl.'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
 					break;
 				default:
 					break;
@@ -297,23 +301,55 @@ function cfum_request_handler() {
 			case 'cfum_admin_js':
 				cfum_admin_js();
 				break;
-			case 'cfum_admin_user_js':
-				cfum_admin_user_js();
-				break;
-			case 'cfum_regular_user_js':
-				cfum_regular_user_js();
-				break;
 			case 'cfum_admin_css':
 				cfum_admin_css();
+				break;
+			case 'cfum_admin_user_js':
+				cfum_admin_user_js();
 				break;
 			case 'cfum_admin_user_css':
 				cfum_admin_user_css();
 				break;
+			case 'cfum_regular_user_js':
+				cfum_regular_user_js();
+				break;
+			case 'cfum_regular_user_css':
+				cfum_regular_user_css();
+				break;
+			case 'cfum_ckeditor_toolbar_config':
+				cfum_ckeditor_toolbar_config();
+				break;
 		}
 	}
-	if (current_user_can('manage_options') && basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php') {
-		add_action('admin_head','cfum_admin_user_head');
-		add_action('show_user_profile','cfum_show_user_form_fields');
+
+	// if (current_user_can('manage_options') && basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php') {
+	// 	add_action('admin_head','cfum_admin_user_head');
+	// 	add_action('show_user_profile','cfum_show_user_form_fields');
+	// }
+	
+	// Add the form fields to the proper section
+	if ((basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' || basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') && current_user_can('unfiltered_html')) {
+		wp_enqueue_script('jquery');
+		wp_enqueue_script('cfum_admin_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js', 'jquery', CFUM_VERSION, true);
+		wp_enqueue_script('cf-author-levels-ckeditor', plugins_url('cf-author-levels/ckeditor/ckeditor.js'), 'jquery', CFUM_VERSION, true);
+		wp_enqueue_style('cfum_admin_user_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css', '', CFUM_VERSION, 'screen');
+
+		add_action('edit_user_profile', 'cfum_show_user_form_fields');
+		add_action('show_user_profile', 'cfum_show_user_form_fields');
+	}
+	else if (basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' && !current_user_can('unfiltered_html')) {
+		wp_enqueue_script('jquery');
+		wp_enqueue_script('cfum_regular_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_js', 'jquery', CFUM_VERSION, true);
+		wp_enqueue_style('cfum_regular_user_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_css', '', CFUM_VERSION, 'screen');
+		
+		add_action('show_user_profile', 'cfum_show_user_information');
+	}
+	else if (isset($_GET['page']) && $_GET['page'] == basename(__FILE__)) {
+		wp_enqueue_script('jquery');
+		wp_enqueue_script('jquery-ui-core');
+		wp_enqueue_script('jquery-ui-sortable');
+		wp_enqueue_script('cfum_admin_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_js', 'jquery', CFUM_VERSION);
+		wp_enqueue_style('cfum_admin_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_css', '', CFUM_VERSION, 'screen');
 	}
 }
 add_action('init','cfum_request_handler');
@@ -414,38 +450,22 @@ function cfum_admin_js() {
 	die();
 }
 
-function cfum_admin_head() {
-	echo '<link rel="stylesheet" type="text/css" href="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_css" />';
-	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_js" type="text/javascript"></script>';
-}
-if (isset($_GET['page']) && $_GET['page'] == basename(__FILE__)) {
-	wp_enqueue_script('jquery');
-	wp_enqueue_script('jquery-ui-core');
-	wp_enqueue_script('jquery-ui-sortable');
-	if (!function_exists('wp_prototype_before_jquery')) {
-		function wp_prototype_before_jquery( $js_array ) {
-			if ( false === $jquery = array_search( 'jquery', $js_array ) )
-				return $js_array;
-			if ( false === $prototype = array_search( 'prototype', $js_array ) )
-				return $js_array;
-			if ( $prototype < $jquery )
-				return $js_array;
-			unset($js_array[$prototype]);
-			array_splice( $js_array, $jquery, 0, 'prototype' );
-			return $js_array;
-		}
-	    add_filter( 'print_scripts_array', 'wp_prototype_before_jquery' );
-	}
-	
-	add_action('admin_head', 'cfum_admin_head');
-}
-
 function cfum_regular_user_js() {
 	header('Content-type: text/javascript');
 	?>
 	jQuery(document).ready(function() {
 		jQuery("#description").parents('tr').attr("style","display:none;");
 	});
+	<?php
+	die();
+}
+
+function cfum_regular_user_css() {
+	header('Content-type: text/css');
+	?>
+	#cfum-bio-container-display {
+		padding:10px;
+	}
 	<?php
 	die();
 }
@@ -458,7 +478,7 @@ function cfum_admin_user_js() {
 		jQuery("a.cfum-use-this").click(function() {
 			var id = jQuery(this).attr('id').split('bio-');
 			var content = jQuery('#'+id[1]).html();
-			jQuery('#cfum-bio_ifr').contents().find('#tinymce').html(content);
+			CKEDITOR.instances.cfum_bio.setData(content);
 			return false;
 		});
 		jQuery("a.cfum-show-bio").click(function() {
@@ -487,6 +507,13 @@ function cfum_admin_user_js() {
 		jQuery('#show_'+id).attr('style','');
 		return false;
 	}
+	
+	// Get the WYSIWYG In place
+	jQuery(function($) {
+		CKEDITOR.replace("cfum_bio", {
+			customConfig : "/index.php?cf_action=cfum_ckeditor_toolbar_config"
+		});
+	});
 	<?php
 	die();
 }
@@ -520,22 +547,28 @@ function cfum_admin_user_css() {
 	die();
 }
 
-function cfum_admin_user_head() {
-	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js" type="text/javascript"></script>';
-	echo '<link rel="stylesheet" type="text/css" href="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css" />';
-}
-if (basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') {
-	add_action('admin_print_footer_scripts','cfum_admin_user_head', 26);
-	add_action('admin_print_footer_scripts', 'cf_tiny_mce', 25);
+function cfum_ckeditor_toolbar_config() {
+	header('Content-type: text/javascript');
+	?>
+	CKEDITOR.editorConfig = function( config )
+	{
+		config.toolbar = "CFUMToolbar";
+
+		config.toolbar_CFUMToolbar =
+		[
+		    ["Format"],
+		    ["Bold","Italic","Strike"],
+		    ["NumberedList","BulletedList","-","Outdent","Indent"],
+		    ["Link","Unlink","Image","HorizontalRule","SpecialChar"],
+		    ["PasteText","PasteFromWord"],
+		    ["Undo","Redo","-","SelectAll","RemoveFormat"],
+			["Source"]
+		];
+	};
+	<?php
+	die();
 }
 
-function cfum_regular_user_head() {
-	echo '<script src="'.trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_js" type="text/javascript"></script>';	
-}
-if (basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php') {
-	add_action('admin_print_footer_scripts','cfum_regular_user_head', 26);
-	add_action('admin_print_footer_scripts', 'cf_tiny_mce', 25);
-}
 
 /**
  * 
@@ -583,7 +616,7 @@ function cfum_options_form() {
 							print('<li id="listitem_'.$level_key.'_'.$author_key.'">
 								<table class="widefat">
 									<tr>
-										<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
+										<td width="80px" style="text-align: center;"><img src="'.plugins_url('cf-author-levels/images/arrow_up_down.png').'" class="handle" alt="move" /></td>
 										<td><a href="'.esc_url("user-edit.php?user_id=$userdata->ID").'">'.htmlspecialchars($userdata->display_name).'</a></td>
 										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$author.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteAuthor(\''.$level_key.'\',\''.$author_key.'\')" /></td>
 										<input type="hidden" value="'.$author.'" name="cfum_author_list['.$level_key.'][]" />
@@ -615,7 +648,7 @@ function cfum_options_form() {
 				<br /><br />
 				<div id="cfum-no-lists">
 					<p>
-						'.__('No lists have been created.  Go <a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit" '.$edit_class.'>here</a> to create new lists.','cfum_author_lvl').'
+						'.__('No lists have been created.  Go <a href="'.get_bloginfo('wpurl').'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=edit" '.$edit_class.'>here</a> to create new lists.','cfum_author_lvl').'
 					</p>
 				</div>
 				');
@@ -627,7 +660,7 @@ function cfum_options_form() {
 				<li id="listitem_###KEY###_###SECTION###" style="display:none;">
 					<table class="widefat">
 						<tr>
-							<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
+							<td width="80px" style="text-align: center;"><img src="'.plugins_url('cf-author-levels/images/arrow_up_down.png').'" class="handle" alt="move" /></td>
 							<td>
 								<select name="cfum_author_list[###KEY###][]" style="max-width:500px; width:100%;">
 									'.cfum_get_authors_list_select().'
@@ -674,7 +707,7 @@ function cfum_edit_form() {
 							print('<li id="listitem_'.$key.'">
 								<table class="widefat">
 									<tr>
-										<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
+										<td width="80px" style="text-align: center;"><img src="'.plugins_url('cf-author-levels/images/arrow_up_down.png').'" class="handle" alt="move" /></td>
 										<td width="300px"><input type="text" name="cfum_author_lvls['.$key.'][title]" size="30" value="'.htmlspecialchars($level['title']).'" /><br />Keyname: <code>'.htmlspecialchars($key).'</code></td>
 										<td><textarea rows="2" style="width:100%;" name="cfum_author_lvls['.$key.'][description]">'.wp_kses(stripslashes($level['description']),$cfum_allowedtags).'</textarea></td>
 										<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_'.$key.'" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteLevel(\''.$key.'\')" /></td>
@@ -700,7 +733,7 @@ function cfum_edit_form() {
 				<li id="listitem_###SECTION###" style="display:none;">
 					<table class="widefat">
 						<tr>
-							<td width="80px" style="text-align: center;"><img src="'.get_bloginfo('url').'/wp-content/plugins/cf-links/images/arrow_up_down.png" class="handle" alt="move" /></td>
+							<td width="80px" style="text-align: center;"><img src="'.plugins_url('cf-author-levels/images/arrow_up_down.png').'" class="handle" alt="move" /></td>
 							<td width="300px"><input type="text" name="cfum_author_lvls[###SECTION###][title]" size="30" value="" /></td>
 							<td><textarea rows="2" style="width:100%;" name="cfum_author_lvls[###SECTION###][description]"></textarea></td>
 							<td width="80px" style="text-align: center;"><input type="button" class="button" id="cfum_delete_###SECTION###" value="'.__('Delete', 'cfum_author_lvl').'" onClick="deleteLevel(###SECTION###)" /></td>
@@ -730,15 +763,65 @@ function cfum_nav($page = '') {
 	$cfum_nav .= '
 		<ul class="subsubsub">
 			<li>
-				<a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=main" '.$main_class.'>'.__('Lists','cfum_author_lvl').'</a> |
+				<a href="'.get_bloginfo('wpurl').'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=main" '.$main_class.'>'.__('Lists','cfum_author_lvl').'</a> |
 			</li>
 			<li>
-				<a href="'.get_bloginfo('wpurl').'/wp-admin/options-general.php?page=cf-author-levels.php&cfum_page=edit" '.$edit_class.'>'.__('List Types','cfum_author_lvl').'</a>
+				<a href="'.get_bloginfo('wpurl').'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=edit" '.$edit_class.'>'.__('List Types','cfum_author_lvl').'</a>
 			</li>
 		</ul>
 	';
 	$cfum_nav .= '</div>';
 	return($cfum_nav);
+}
+
+function cfum_show_user_information() {
+	global $profileuser;
+	$user_info = get_usermeta($profileuser->ID, 'cfum_user_data');
+	$logged_in_user = wp_get_current_user();
+	if (empty($user_info[sanitize_title(get_bloginfo('name')).'feedburner_link']) && empty($user_info['photo_url']) && empty($user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio'])) { return; }
+	?>
+	<h3><?php _e('User Information', 'cfum_author_lvl'); ?></h3>
+	<?php if (!empty($user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio'])) { ?>
+	<table class="form-table">
+	<tbody>
+		<tr>
+			<th>
+				<label for="content"><?php _e('User Bio','cfum_author_lvl') ?></label>
+			</th>
+			<td>
+				<div style="border: 1px solid #DFDFDF;">
+					<div id="cfum-bio-container-display">
+						<?php echo $user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio']; ?>
+					</div>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+	<?php } ?>
+	<?php if (!empty($user_info['photo_url']) && !empty($user_info[sanitize_title(get_bloginfo('name')).'feedburner_link'])) { ?>
+		<table class="form-table">
+		<tbody>
+			<?php if (!empty($user_info['photo_url'])) { ?>
+			<tr>
+				<th><label for="cfum_photo_url"><?php _e('Photo URL','cfum_author_lvl') ?></label></th>
+				<td>
+					<img src="<?php echo $user_info['photo_url']; ?>" border="0" />
+				</td>
+			</tr>
+			<?php } ?>
+			<?php if (!empty($user_info[sanitize_title(get_bloginfo('name')).'feedburner_link'])) { ?>
+			<tr>
+				<th><label for="cfum_photo_url"><?php _e('Feedburner RSS Link','cfum_author_lvl') ?></label></th>
+				<td>
+					<a href="<?php echo $user_info[sanitize_title(get_bloginfo('name')).'feedburner_link']; ?>"><?php _e('Feedburner Link', 'cfum_author_lvl'); ?></a>
+				</td>
+			</tr>
+			<?php } ?>
+		</tbody>
+		</table>
+	<?php
+	}
 }
 
 function cfum_show_user_form_fields() {
@@ -760,39 +843,45 @@ function cfum_show_user_form_fields() {
 				<label for="content"><?php _e('User Bio','cfum_author_lvl') ?></label>
 			</th>
 			<td>
-				<div style="clear:both">&nbsp;</div>
-					<div style="border: 1px solid #DFDFDF;">
-						<div id="cfum-bio-container">
-							<textarea id="cfum-bio" class="cf_tiny_mce" name="cfum-bio"><?php echo $user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio']; ?></textarea>
-						</div>
-						<div id="cfum-bio-otherblog">
-							<h3><?php _e('Would you like to use another blogs bio?','cfum_author_lvl'); ?></h3>
-							<?php
-							foreach($user_info as $key => $info) {
-								if (strstr($key,'-cfum-bio') !== false) {
-									$this_blog_key = sanitize_title(get_bloginfo('name')).'-cfum-bio';
-									if ($key != $this_blog_key) {
-										if (!empty($info)) {
-											?>
-											<h4 id="<?php echo $key; ?>-blog">
-												<?php echo str_replace('-cfum-bio','',$key); _e('\'s bio','cfum_author_lvl'); ?> <a href="#" class="cfum-show-bio" id="show_<?php echo $key; ?>"><?php _e('Show','cfum_author_lvl'); ?></a><a href="#" class="cfum-show-bio" id="hide_<?php echo $key; ?>" style="display:none;"><?php _e('Hide','cfum_author_lvl'); ?></a>
-											</h4>
-											<div id="box-<?php echo $key; ?>" class="cfum_alternate_bio">
-												<div id="<?php echo $key; ?>">
-													<?php echo $info; ?>
-												</div>
-												<br />
-												<a href="#" class="cfum-use-this" id="bio-<?php echo $key; ?>"><?php _e('Use this bio','cfum_author_lvl'); ?></a>
+				<div style="border: 1px solid #DFDFDF;">
+					<div id="cfum-bio-container">
+						<textarea id="cfum_bio" class="cfum-bio-textarea" name="cfum-bio"><?php echo $user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio']; ?></textarea>
+					</div>
+					<?php 
+					$other_blog_content = '';
+					if (is_array($user_info) && !empty($user_info)) { 
+						foreach($user_info as $key => $info) {
+							if (strstr($key,'-cfum-bio') !== false) {
+								$this_blog_key = sanitize_title(get_bloginfo('name')).'-cfum-bio';
+								if ($key != $this_blog_key) {
+									if (!empty($info)) {
+										$other_blog_content .= '
+										<h4 id="'.$key.'-blog">
+											'.str_replace('-cfum-bio','',$key).__('\'s bio','cfum_author_lvl').' <a href="#" class="cfum-show-bio" id="show_'.$key.'">'.__('Show','cfum_author_lvl').'</a><a href="#" class="cfum-show-bio" id="hide_'.$key.'" style="display:none;">'.__('Hide','cfum_author_lvl').'</a>
+										</h4>
+										<div id="box-'.$key.'" class="cfum_alternate_bio">
+											<div id="'.$key.'">
+												'.$info.'
 											</div>
-											<?php
-										}
+											<br />
+											<a href="#" class="cfum-use-this" id="bio-'.$key.'">'.__('Use this bio','cfum_author_lvl').'</a>
+										</div>
+										';
 									}
 								}
 							}
-							?>
+						}
+					}
+					if (!empty($other_blog_content)) {
+						?>
+						<div id="cfum-bio-otherblog">
+							<h3><?php _e('Would you like to use another blogs bio?','cfum_author_lvl'); ?></h3>
+							<?php echo $other_blog_content; ?>
 						</div>
-					</div>
-				<div style="clear:both">&nbsp;</div>
+						<?php
+					}
+					?>
+				</div>
 			</td>
 		</tr>
 	</tbody>
@@ -819,7 +908,6 @@ function cfum_show_user_form_fields() {
 	</table>
 <?php
 }
-add_action('edit_user_profile', 'cfum_show_user_form_fields');
 
 /**
  * 
