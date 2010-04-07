@@ -1075,7 +1075,7 @@ function cfum_get_author_info($author, $args = array()) {
 					$return .= $author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after;
 				}
 				if($show_bio) {
-					$return .= apply_filters('the_content',$usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']);
+					$return .= $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio'];
 				}
 			$return .= '
 				</div>
