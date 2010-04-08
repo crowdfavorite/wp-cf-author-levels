@@ -1,0 +1,9 @@
+# CF Author Levels Changelog
+
+## 1.2
+
+- Plugin tested and optomized for WP 3.0
+- Updated display for users without editing privileges to display bio and related image
+- Removed use of WP TinyMCE in favor of CKEditor for less breakage
+
+
