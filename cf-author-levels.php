@@ -1109,6 +1109,8 @@ function cfum_get_authors_list_select() {
 	$return = '';
 	$authors = get_users_of_blog($wpdb->blog_id);
 	foreach ($authors as $author) {
+		// Remove all subscribers from the list
+		if (strpos($author->meta_value, 'administrator') === false && strpos($author->meta_value, 'editor') === false && strpos($author->meta_value, 'author') === false && strpos($author->meta_value, 'contributor') === false) { continue; }
 		$return .= '<option value="'.attribute_escape($author->user_id).'">'.attribute_escape($author->display_name).'</option>';
 	}
 	return $return;
