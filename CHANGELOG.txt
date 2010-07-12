@@ -1,0 +1,15 @@
+# CF Author Levels Changelog
+
+## 1.2.1
+
+- Bug fix
+- Modified display list of users to remove all subscribers so the select box doesn't break the page load when adding users to Author Lists
+
+## 1.2
+
+- Plugin tested and optimized for WP 3.0
+- Updated display for users without editing privileges to display bio and related image
+- Removed use of WP TinyMCE in favor of CKEditor for less breakage
+- Fixed bug where Carrington Build posts broke bios
+
+
