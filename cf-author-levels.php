@@ -870,12 +870,37 @@ function cfum_get_author_info($author, $args = array()) {
 				if ($show_author_title) {
 					$return .= $author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after;
 				}
-				error_log('author: '.$author);
-				if ($author == 1590) {
-					error_log('FILE: '.basename(__FILE__).' -- LINE: '.__LINE__);
-				}
 				if($show_bio) {
+					if (function_exists('cfcn_get_context')) {
+						global $cfum_author_id;
+						$cfum_author_id = $author;
+						add_filter('cfcn_context', 'cfum_add_context');
+					}
 					$return .= do_shortcode($usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']);
+					if (function_exists('cfcn_get_context')) {
+						if (isset($_GET['cfcn_display']) && $_GET['cfcn_display'] == 'true') {
+							$return .= '
+							<div class="cfum-author-bio-context">
+								<p><b>NOTE:</b> The following items have been added to the CF Context for this user bio.</p>
+								<p>
+									Name: cfum_author_id
+									<br />
+									Value: '.$cfum_author_id.'
+								</p>
+								<p>
+									Name: cfum_username
+									<br />
+									Value: '.$userdata->user_login.'
+								</p>
+							</div>
+							';
+						}
+						
+							$context['cfum_author_id'] = $cfum_author_id;
+							$context['cfum_username'] = $userdata->user_login;
+						
+						remove_filter('cfcn_context', 'cfum_add_context');
+					}
 				}
 			$return .= '
 				</div>
@@ -1196,6 +1221,21 @@ function cfum_widgets_control($widget_args = 1) {
 			</select>
 		</p>
 	';
+}
+
+/**
+ * 
+ * CF Author Levels/CF Context Integration
+ * 
+ */
+function cfum_add_context($context) {
+	global $cfum_author_id;
+	$userdata = get_userdata($cfum_author_id);
+	
+	$context['cfum_author_id'] = $cfum_author_id;
+	$context['cfum_username'] = $userdata->user_login;
+	
+	return $context;
 }
 
 /**
