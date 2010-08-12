@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.2.1
+Version: 1.3
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -12,13 +12,13 @@ Author URI: http://crowdfavorite.com
 
 load_plugin_textdomain('cfum_author_lvl');
 
-define('CFUM_VERSION', '1.2');
+define('CFUM_VERSION', '1.3');
 
 $cfum_allowedtags = array(
 	'a' => array(
-			'href' => array(),
-			'title' => array(), 
-			'target' => array()
+		'href' => array(),
+		'title' => array(), 
+		'target' => array(),
 	),
 	'abbr' => array(
 		'title' => array()
@@ -34,200 +34,6 @@ $cfum_allowedtags = array(
 	'b' => array(),
 	'p' => array()
 );
-
-// README HANDLING
-	add_action('admin_init','cfum_add_readme');
-	
-	/**
-	 * Enqueue the readme function
-	 */
-	function cfum_add_readme() {
-		if(function_exists('cfreadme_enqueue')) {
-			cfreadme_enqueue('cf-author-levels','cfum_readme');
-		}
-	}
-	
-	/**
-	 * return the contents of the links readme file
-	 * replace the image urls with full paths to this plugin install
-	 *
-	 * @return string
-	 */
-	function cfum_readme() {
-		$file = realpath(dirname(__FILE__)).'/readme/README.txt';
-		if(is_file($file) && is_readable($file)) {
-			$markdown = file_get_contents($file);
-			$markdown = preg_replace('|!\[(.*?)\]\((.*?)\)|','![$1]('.WP_PLUGIN_URL.'/cf-author-levels/readme/$2)',$markdown);
-			return $markdown;
-		}
-		return null;
-	}
-
-// Widget
-
-// Author Widget
-
-// Registers each instance of our widget on startup
-	function cfum_widgets_init() {
-		if (!$options = get_option('cfum_widgets'))
-			$options = array();
-
-		$widget_ops = array('classname' => 'cfum_widgets', 'description' => __('Make Widgets from Author Levels Lists.'));
-		$control_ops = array('width' => 250, 'height' => 350, 'id_base' => 'cfum_widgets');
-		$name = __('CF Author Levels');
-
-		$registered = false;
-		foreach(array_keys($options) as $o) {
-			// Old widgets can have null values for some reason
-			if (!isset($options[$o]['title'])) { // we used 'something' above in our exampple.  Replace with with whatever your real data are.
-				continue;
-			}
-
-			// $id should look like {$id_base}-{$o}
-			$id = "cfum_widgets-$o"; // Never never never translate an id
-			$registered = true;
-			wp_register_sidebar_widget($id, $name, 'cfum_widgets', $widget_ops, array('number' => $o));
-			wp_register_widget_control($id, $name, 'cfum_widgets_control', $control_ops, array('number' => $o));
-		}
-
-		// If there are none, we register the widget's existance with a generic template
-		if ( !$registered ) {
-			wp_register_sidebar_widget('cfum-widgets-1', $name, 'cfum_widgets', $widget_ops, array('number' => -1));
-			wp_register_widget_control('cfum-widgets-1', $name, 'cfum_widgets_control', $control_ops, array('number' => -1));
-		}
-	}
-	add_action('widgets_init','cfum_widgets_init');
-
-	function cfum_widgets($args, $widget_args = 1) {
-		extract($args,EXTR_SKIP);
-		if (is_numeric($widget_args)) {
-			$widget_args = array( 'number' => $widget_args );
-		}
-		$widget_args = wp_parse_args($widget_args, array('number' => -1));
-		extract( $widget_args, EXTR_SKIP );
-		
-		// get widget options, return if none present
-		$options = get_option('cfum_widgets');
-		if(!isset($options[$number])) {
-			return;
-		}
-		extract($options[$number]);
-		
-		// get author list, return if not present
-		$level_list = cfum_get_level($key);
-		if(empty($level_list)) {
-			return;
-		}
-		else {
-			// pre-trim and fill the array with authordata
-			$level = $level_list[$key];
-			foreach($level['list'] as $k => $v) {
-				$level['list'][$k] = get_userdata($v);
-			}
-		}
-
-		echo $before_widget.
-			$before_title.$title.$after_title.
-			'<div class="author-list">';
-		$list = '
-				<ul>';
-		foreach($level['list'] as $k => $userdata) {
-			$list .= '
-					<li><a href="'.get_author_posts_url($userdata->ID).'">'.$userdata->display_name.'</a></li>';
-		}
-		$list .= '
-				</ul>';
-		echo apply_filters('cfum_widget_author_list',$list,$key,$level);
-		echo '
-			</div>'.
-			$after_widget;
-	}
-
-	function cfum_widgets_control($widget_args = 1) {
-		global $wp_registered_widgets;
-		static $updated = false;
-		
-		if (is_numeric($widget_args)) {
-			$widget_args = array('number' => $widget_args);
-		}
-		$widget_args = wp_parse_args($widget_args, array('number' => -1));
-		extract($widget_args, EXTR_SKIP);
-		
-		// Data should be stored as array:  array( number => data for that instance of the widget, ... )
-		$options = get_option('cfum_widgets');
-		if (!is_array($options)) {
-			$options = array();
-		}
-
-		// We need to update the data
-		if (!$updated && !empty($_POST['sidebar'])) {
-			// Tells us what sidebar to put the data in
-			$sidebar = (string) $_POST['sidebar'];
-			$sidebars_widgets = wp_get_sidebars_widgets();
-			if (isset($sidebars_widgets[$sidebar])) {
-				$this_sidebar =& $sidebars_widgets[$sidebar];
-			}
-			else {
-				$this_sidebar = array();
-			}
-			
-			foreach($this_sidebar as $_widget_id) {
-				// Remove all widgets of this type from the sidebar.  We'll add the new data in a second.  This makes sure we don't get any duplicate data
-				// since widget ids aren't necessarily persistent across multiple updates
-				if ('cfum_widgets' == $wp_registered_widgets[$_widget_id]['callback'] && isset($wp_registered_widgets[$_widget_id]['params'][0]['number'])) {
-					$widget_number = $wp_registered_widgets[$_widget_id]['params'][0]['number'];
-					if (!in_array( "cfum_widgets-$widget_number", $_POST['widget-id'])) { // the widget has been removed.
-						unset($options[$widget_number]);
-					}
-				}
-			}
-
-			foreach((array) $_POST['cfum_widgets'] as $widget_number => $widgets_instance) {
-				// compile data from $widgets_instance
-				if (!isset($widgets_instance['key']) && isset($options[$widget_number])) { // user clicked cancel
-					continue;
-				}
-				$key = strip_tags($widgets_instance['key']);
-				$title = wp_specialchars( $widgets_instance['title'] );
-				$options[$widget_number] = array(
-					'title' => $title,
-					'key' => $key
-				);  // Even simple widgets should store stuff in array, rather than in scalar
-			}
-			update_option('cfum_widgets', $options);
-			$updated = true; // So that we don't go through this more than once
-		}
-		
-		// set options for display
-		$options = get_option('cfum_widgets',array('',''));
-		if(-1 == $number) {
-			$title = '';
-			$number = '%i%';
-		}
-		else {
-			$key = attribute_escape($options[$number]['key']);
-			$title = attribute_escape($options[$number]['title']);
-		}
-		
-		// show form
-		echo '
-			<p>
-				<label for="">Title</label>
-				<input type="text" name="cfum_widgets['.$number.'][title]" value="'.$title.'" />
-			</p>
-			<p>
-				<select name="cfum_widgets['.$number.'][key]" id="oc_executive_member_lists">
-					<option value="">--- select author list ---</option>';
-		$author_levels = cfum_get_levels(false);
-		foreach($author_levels as $l_key => $l_data) {
-			echo '
-					<option value="'.$l_key.'"'.($key == $l_key ? ' selected="selected"' : null).'>'.$l_data['title'].'</option>'; 
-		}
-		echo '
-				</select>
-			</p>
-		';
-	}
 
 /**
  * 
@@ -273,29 +79,49 @@ function cfum_check_page() {
 }
 
 function cfum_request_handler() {
-	if (current_user_can('manage_options')) {
-		$blogurl = '';
-		if (is_ssl()) {
-			$blogurl = str_replace('http://','https://',get_bloginfo('wpurl'));
-		}
-		else {
-			$blogurl = get_bloginfo('wpurl');
-		}				
-		if (!empty($_POST['cf_action'])) {
-			switch($_POST['cf_action']) {
-				case 'cfum_update_author_lvls':
-					cfum_update_author_lvls($_POST['cfum_author_lvls']);
-					wp_redirect($blogurl.'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated');
-					break;
-				case 'cfum_update_author_lists':
-					cfum_update_author_list($_POST['cfum_author_list']);
-					wp_redirect($blogurl.'/wp-admin/users.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated');
-					break;
-				default:
-					break;
-			}
+	if (current_user_can('manage_options') && !empty($_POST['cf_action'])) {
+		switch($_POST['cf_action']) {
+			case 'cfum_update_author_lvls':
+				cfum_update_author_lvls($_POST['cfum_author_lvls']);
+				wp_redirect(admin_url('users.php?page=cf-author-levels.php&cfum_page=edit&cfum_message=updated'));
+				break;
+			case 'cfum_update_author_lists':
+				cfum_update_author_list($_POST['cfum_author_list']);
+				wp_redirect(admin_url('users.php?page=cf-author-levels.php&cfum_page=main&cfum_message=updated'));
+				break;
 		}
 	}
+	
+	// Add the CSS, JS and Proper Meta fields to the proper screens
+	// Note that these functions need to go here since pluggable.php isn't loaded on plugins_loaded.
+	if ((basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' || basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') && current_user_can('unfiltered_html')) {
+		wp_enqueue_script('jquery');
+		wp_enqueue_script('cfum_admin_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js', 'jquery', CFUM_VERSION, true);
+		wp_enqueue_script('cf-author-levels-ckeditor', plugins_url('cf-author-levels/ckeditor/ckeditor.js'), 'jquery', CFUM_VERSION, true);
+		wp_enqueue_style('cfum_admin_user_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css', '', CFUM_VERSION, 'screen');
+
+		add_action('edit_user_profile', 'cfum_show_user_form_fields');
+		add_action('show_user_profile', 'cfum_show_user_form_fields');
+	}
+	else if (basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' && !current_user_can('unfiltered_html')) {
+		wp_enqueue_script('jquery');
+		wp_enqueue_script('cfum_regular_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_js', 'jquery', CFUM_VERSION, true);
+		wp_enqueue_style('cfum_regular_user_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_css', '', CFUM_VERSION, 'screen');
+
+		add_action('show_user_profile', 'cfum_show_user_information');
+	}
+	else if (!empty($_GET['page']) && strpos($_GET['page'], 'cf-author-levels') !== false) {
+		wp_enqueue_script('jquery');
+		wp_enqueue_script('jquery-ui-core');
+		wp_enqueue_script('jquery-ui-sortable');
+		wp_enqueue_script('cfum_admin_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_js', 'jquery', CFUM_VERSION);
+		wp_enqueue_style('cfum_admin_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_css', '', CFUM_VERSION, 'screen');
+	}
+}
+add_action('init','cfum_request_handler');
+add_action('wp_ajax_cfum_update_settings','cfum_request_handler');
+
+function cfum_resources_handler() {
 	if (!empty($_GET['cf_action'])) {
 		switch ($_GET['cf_action']) {
 			case 'cfum_admin_js':
@@ -321,39 +147,8 @@ function cfum_request_handler() {
 				break;
 		}
 	}
-
-	// if (current_user_can('manage_options') && basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php') {
-	// 	add_action('admin_head','cfum_admin_user_head');
-	// 	add_action('show_user_profile','cfum_show_user_form_fields');
-	// }
-	
-	// Add the form fields to the proper section
-	if ((basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' || basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') && current_user_can('unfiltered_html')) {
-		wp_enqueue_script('jquery');
-		wp_enqueue_script('cfum_admin_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js', 'jquery', CFUM_VERSION, true);
-		wp_enqueue_script('cf-author-levels-ckeditor', plugins_url('cf-author-levels/ckeditor/ckeditor.js'), 'jquery', CFUM_VERSION, true);
-		wp_enqueue_style('cfum_admin_user_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_css', '', CFUM_VERSION, 'screen');
-
-		add_action('edit_user_profile', 'cfum_show_user_form_fields');
-		add_action('show_user_profile', 'cfum_show_user_form_fields');
-	}
-	else if (basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' && !current_user_can('unfiltered_html')) {
-		wp_enqueue_script('jquery');
-		wp_enqueue_script('cfum_regular_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_js', 'jquery', CFUM_VERSION, true);
-		wp_enqueue_style('cfum_regular_user_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_regular_user_css', '', CFUM_VERSION, 'screen');
-		
-		add_action('show_user_profile', 'cfum_show_user_information');
-	}
-	else if (isset($_GET['page']) && $_GET['page'] == basename(__FILE__)) {
-		wp_enqueue_script('jquery');
-		wp_enqueue_script('jquery-ui-core');
-		wp_enqueue_script('jquery-ui-sortable');
-		wp_enqueue_script('cfum_admin_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_js', 'jquery', CFUM_VERSION);
-		wp_enqueue_style('cfum_admin_css', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_css', '', CFUM_VERSION, 'screen');
-	}
 }
-add_action('init','cfum_request_handler');
-add_action('wp_ajax_cfum_update_settings','cfum_request_handler');
+add_action('init', 'cfum_resources_handler', 1);
 
 function cfum_admin_css() {
 	header('Content-type: text/css');
@@ -552,6 +347,7 @@ function cfum_ckeditor_toolbar_config() {
 	?>
 	CKEDITOR.editorConfig = function( config )
 	{
+		config.entities = false;
 		config.toolbar = "CFUMToolbar";
 
 		config.toolbar_CFUMToolbar =
@@ -1074,8 +870,12 @@ function cfum_get_author_info($author, $args = array()) {
 				if ($show_author_title) {
 					$return .= $author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after;
 				}
+				error_log('author: '.$author);
+				if ($author == 1590) {
+					error_log('FILE: '.basename(__FILE__).' -- LINE: '.__LINE__);
+				}
 				if($show_bio) {
-					$return .= $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio'];
+					$return .= do_shortcode($usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']);
 				}
 			$return .= '
 				</div>
@@ -1232,12 +1032,208 @@ function cfum_description_process() {
 
 /**
  * 
+ * CF Author Levels Widgets
+ *
+ */
+
+// Registers each instance of our widget on startup
+function cfum_widgets_init() {
+	if (!$options = get_option('cfum_widgets'))
+		$options = array();
+
+	$widget_ops = array('classname' => 'cfum_widgets', 'description' => __('Make Widgets from Author Levels Lists.'));
+	$control_ops = array('width' => 250, 'height' => 350, 'id_base' => 'cfum_widgets');
+	$name = __('CF Author Levels');
+
+	$registered = false;
+	foreach(array_keys($options) as $o) {
+		// Old widgets can have null values for some reason
+		if (!isset($options[$o]['title'])) { // we used 'something' above in our exampple.  Replace with with whatever your real data are.
+			continue;
+		}
+
+		// $id should look like {$id_base}-{$o}
+		$id = "cfum_widgets-$o"; // Never never never translate an id
+		$registered = true;
+		wp_register_sidebar_widget($id, $name, 'cfum_widgets', $widget_ops, array('number' => $o));
+		wp_register_widget_control($id, $name, 'cfum_widgets_control', $control_ops, array('number' => $o));
+	}
+
+	// If there are none, we register the widget's existance with a generic template
+	if ( !$registered ) {
+		wp_register_sidebar_widget('cfum-widgets-1', $name, 'cfum_widgets', $widget_ops, array('number' => -1));
+		wp_register_widget_control('cfum-widgets-1', $name, 'cfum_widgets_control', $control_ops, array('number' => -1));
+	}
+}
+add_action('widgets_init','cfum_widgets_init');
+
+function cfum_widgets($args, $widget_args = 1) {
+	extract($args,EXTR_SKIP);
+	if (is_numeric($widget_args)) {
+		$widget_args = array( 'number' => $widget_args );
+	}
+	$widget_args = wp_parse_args($widget_args, array('number' => -1));
+	extract( $widget_args, EXTR_SKIP );
+	
+	// get widget options, return if none present
+	$options = get_option('cfum_widgets');
+	if(!isset($options[$number])) {
+		return;
+	}
+	extract($options[$number]);
+	
+	// get author list, return if not present
+	$level_list = cfum_get_level($key);
+	if(empty($level_list)) {
+		return;
+	}
+	else {
+		// pre-trim and fill the array with authordata
+		$level = $level_list[$key];
+		foreach($level['list'] as $k => $v) {
+			$level['list'][$k] = get_userdata($v);
+		}
+	}
+
+	echo $before_widget.
+		$before_title.$title.$after_title.
+		'<div class="author-list">';
+	$list = '
+			<ul>';
+	foreach($level['list'] as $k => $userdata) {
+		$list .= '
+				<li><a href="'.get_author_posts_url($userdata->ID).'">'.$userdata->display_name.'</a></li>';
+	}
+	$list .= '
+			</ul>';
+	echo apply_filters('cfum_widget_author_list',$list,$key,$level);
+	echo '
+		</div>'.
+		$after_widget;
+}
+
+function cfum_widgets_control($widget_args = 1) {
+	global $wp_registered_widgets;
+	static $updated = false;
+	
+	if (is_numeric($widget_args)) {
+		$widget_args = array('number' => $widget_args);
+	}
+	$widget_args = wp_parse_args($widget_args, array('number' => -1));
+	extract($widget_args, EXTR_SKIP);
+	
+	// Data should be stored as array:  array( number => data for that instance of the widget, ... )
+	$options = get_option('cfum_widgets');
+	if (!is_array($options)) {
+		$options = array();
+	}
+
+	// We need to update the data
+	if (!$updated && !empty($_POST['sidebar'])) {
+		// Tells us what sidebar to put the data in
+		$sidebar = (string) $_POST['sidebar'];
+		$sidebars_widgets = wp_get_sidebars_widgets();
+		if (isset($sidebars_widgets[$sidebar])) {
+			$this_sidebar =& $sidebars_widgets[$sidebar];
+		}
+		else {
+			$this_sidebar = array();
+		}
+		
+		foreach($this_sidebar as $_widget_id) {
+			// Remove all widgets of this type from the sidebar.  We'll add the new data in a second.  This makes sure we don't get any duplicate data
+			// since widget ids aren't necessarily persistent across multiple updates
+			if ('cfum_widgets' == $wp_registered_widgets[$_widget_id]['callback'] && isset($wp_registered_widgets[$_widget_id]['params'][0]['number'])) {
+				$widget_number = $wp_registered_widgets[$_widget_id]['params'][0]['number'];
+				if (!in_array( "cfum_widgets-$widget_number", $_POST['widget-id'])) { // the widget has been removed.
+					unset($options[$widget_number]);
+				}
+			}
+		}
+
+		foreach((array) $_POST['cfum_widgets'] as $widget_number => $widgets_instance) {
+			// compile data from $widgets_instance
+			if (!isset($widgets_instance['key']) && isset($options[$widget_number])) { // user clicked cancel
+				continue;
+			}
+			$key = strip_tags($widgets_instance['key']);
+			$title = wp_specialchars( $widgets_instance['title'] );
+			$options[$widget_number] = array(
+				'title' => $title,
+				'key' => $key
+			);  // Even simple widgets should store stuff in array, rather than in scalar
+		}
+		update_option('cfum_widgets', $options);
+		$updated = true; // So that we don't go through this more than once
+	}
+	
+	// set options for display
+	$options = get_option('cfum_widgets',array('',''));
+	if(-1 == $number) {
+		$title = '';
+		$number = '%i%';
+	}
+	else {
+		$key = attribute_escape($options[$number]['key']);
+		$title = attribute_escape($options[$number]['title']);
+	}
+	
+	// show form
+	echo '
+		<p>
+			<label for="">Title</label>
+			<input type="text" name="cfum_widgets['.$number.'][title]" value="'.$title.'" />
+		</p>
+		<p>
+			<select name="cfum_widgets['.$number.'][key]" id="oc_executive_member_lists">
+				<option value="">--- select author list ---</option>';
+	$author_levels = cfum_get_levels(false);
+	foreach($author_levels as $l_key => $l_data) {
+		echo '
+				<option value="'.$l_key.'"'.($key == $l_key ? ' selected="selected"' : null).'>'.$l_data['title'].'</option>'; 
+	}
+	echo '
+			</select>
+		</p>
+	';
+}
+
+/**
+ * 
  * CF Author Levels Deprecated Functions
  *
  */
 
 function cfum_print_list($key = '') {
 	echo cfum_get_author_levels($key);
+}
+
+// CF README HANDLING
+
+/**
+ * Enqueue the readme function
+ */
+function cfum_add_readme() {
+	if(function_exists('cfreadme_enqueue')) {
+		cfreadme_enqueue('cf-author-levels','cfum_readme');
+	}
+}
+add_action('admin_init','cfum_add_readme');
+
+/**
+ * return the contents of the links readme file
+ * replace the image urls with full paths to this plugin install
+ *
+ * @return string
+ */
+function cfum_readme() {
+	$file = realpath(dirname(__FILE__)).'/readme/README.txt';
+	if(is_file($file) && is_readable($file)) {
+		$markdown = file_get_contents($file);
+		$markdown = preg_replace('|!\[(.*?)\]\((.*?)\)|','![$1]('.WP_PLUGIN_URL.'/cf-author-levels/readme/$2)',$markdown);
+		return $markdown;
+	}
+	return null;
 }
 
 ?>
