@@ -1,5 +1,11 @@
 # CF Author Levels Changelog
 
+## 1.3
+
+- Cleanup of code
+- Adding ability to add shortcodes to bios
+- Adding CF Context ability around the bio for easier targeting
+
 ## 1.2.1
 
 - Bug fix
