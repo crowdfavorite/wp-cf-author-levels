@@ -846,6 +846,12 @@ function cfum_get_author_info($author, $args = array()) {
 	
 	$userdata = get_userdata($author);
 	$usermeta = get_usermeta($author, 'cfum_user_data');
+	
+	$display_name = apply_filters('cfum_author_display_name', $userdata->display_name, $author);
+	$photo_url = apply_filters('cfum_author_photo_url', cfum_get_photo_url($userdata->ID), $author);
+	$posts_url = apply_filters('cfum_author_posts_url', get_author_posts_url($author), $author);
+	$bio = apply_filters('cfum_author_bio', $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio'], $author);
+	
 	$return .= '
 		<div id="'.$userdata->user_nicename.'" class="aboutauthor aboutauthor-'.$author.'">';
 			if($show_image) {
@@ -853,9 +859,9 @@ function cfum_get_author_info($author, $args = array()) {
 					<div class="authorimage authorimage-'.$author.'">
 					';
 						if ($show_image_link) {
-							$return .= '<a href="'.get_author_posts_url($author).'">';
+							$return .= '<a href="'.esc_attr($posts_url).'">';
 						}
-						$return .= '<img src="'.cfum_get_photo_url($userdata->ID).'" width="80px" alt="Author Image for '.htmlspecialchars($userdata->display_name).'" />';
+						$return .= '<img src="'.esc_attr($photo_url).'" width="80px" alt="Author Image for '.esc_attr($display_name).'" />';
 						if ($show_image_link) {
 							$return .= '</a>';
 						}
@@ -868,7 +874,7 @@ function cfum_get_author_info($author, $args = array()) {
 				<div class="authorbio authorbio-'.$author.'">
 				';
 				if ($show_author_title) {
-					$return .= $author_title_before.'<a href="'.get_author_posts_url($author).'">'.$userdata->display_name.'</a>'.$author_title_after;
+					$return .= $author_title_before.'<a href="'.esc_attr($posts_url).'">'.esc_html($display_name).'</a>'.$author_title_after;
 				}
 				if($show_bio) {
 					if (function_exists('cfcn_get_context')) {
@@ -876,7 +882,7 @@ function cfum_get_author_info($author, $args = array()) {
 						$cfum_author_id = $author;
 						add_filter('cfcn_context', 'cfum_add_context');
 					}
-					$return .= do_shortcode($usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio']);
+					$return .= do_shortcode($bio);
 					if (function_exists('cfcn_get_context')) {
 						if (isset($_GET['cfcn_display']) && $_GET['cfcn_display'] == 'true') {
 							$return .= '
@@ -895,10 +901,8 @@ function cfum_get_author_info($author, $args = array()) {
 							</div>
 							';
 						}
-						
-							$context['cfum_author_id'] = $cfum_author_id;
-							$context['cfum_username'] = $userdata->user_login;
-						
+						$context['cfum_author_id'] = $cfum_author_id;
+						$context['cfum_username'] = $userdata->user_login;
 						remove_filter('cfcn_context', 'cfum_add_context');
 					}
 				}
@@ -908,7 +912,7 @@ function cfum_get_author_info($author, $args = array()) {
 			if($show_link) {
 				$return .= '
 					<p class="authorlink authorlink-'.$author.'">
-						'.__('View ','cfum_author_lvl').'<a href="'.get_author_posts_url($author).'">'.__('articles by ','cfum_author_lvls').$userdata->display_name.'</a>
+						'.__('View ','cfum_author_lvl').'<a href="'.esc_attr($posts_url).'">'.__('articles by ','cfum_author_lvls').esc_html($display_name).'</a>
 					</p>
 				';
 			}
