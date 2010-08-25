@@ -1,5 +1,9 @@
 # CF Author Levels Changelog
 
+## 1.3.2
+
+- Fixing a stupid bug with IE and innerHTML. Moved a display none to the wrapping div.
+
 ## 1.3.1
 
 - Adding filtering to the display of the author information

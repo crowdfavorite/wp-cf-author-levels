@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.3.1
+Version: 1.3.2
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -222,14 +222,12 @@ function cfum_admin_js() {
 		var section = id.toString();
 		var html = jQuery('#newitem_SECTION').html().replace(/###SECTION###/g, section);
 		jQuery('#cfum-list').append(html);
-		jQuery('#listitem_'+section).attr('style','');
 	}
 	function addUser(userKey) {
 		var id = new Date().valueOf();
 		var section = id.toString();
 		var html = jQuery('#newitem_SECTION').html().replace(/###SECTION###/g, section).replace(/###KEY###/g, userKey);
 		jQuery('#cfum-list-'+userKey).append(html);
-		jQuery('#listitem_'+userKey+'_'+section).attr('style','');
 	}
 	function deleteLevel(levelID) {
 		if (confirm('Are you sure you want to delete this?')) {
@@ -452,8 +450,8 @@ function cfum_options_form() {
 			print('
 			</form>
 			');
-			print('<div id="newitem_SECTION">
-				<li id="listitem_###KEY###_###SECTION###" style="display:none;">
+			print('<div id="newitem_SECTION" style="display:none;">
+				<li id="listitem_###KEY###_###SECTION###">
 					<table class="widefat">
 						<tr>
 							<td width="80px" style="text-align: center;"><img src="'.plugins_url('cf-author-levels/images/arrow_up_down.png').'" class="handle" alt="move" /></td>
@@ -525,8 +523,8 @@ function cfum_edit_form() {
 					<input type="submit" class="button-primary button" name="submit" id="cfum-submit" value="'.__('Update Settings', 'cfum_author_lvl').'" />
 				</p>
 			</form>');
-			print('<div id="newitem_SECTION">
-				<li id="listitem_###SECTION###" style="display:none;">
+			print('<div id="newitem_SECTION" style="display:none;">
+				<li id="listitem_###SECTION###">
 					<table class="widefat">
 						<tr>
 							<td width="80px" style="text-align: center;"><img src="'.plugins_url('cf-author-levels/images/arrow_up_down.png').'" class="handle" alt="move" /></td>
