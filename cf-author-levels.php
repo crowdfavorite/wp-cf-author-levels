@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.3.2
+Version: 1.3.3
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -12,7 +12,7 @@ Author URI: http://crowdfavorite.com
 
 load_plugin_textdomain('cfum_author_lvl');
 
-define('CFUM_VERSION', '1.3.1');
+define('CFUM_VERSION', '1.3.3');
 
 $cfum_allowedtags = array(
 	'a' => array(
@@ -783,7 +783,7 @@ function cfum_get_author_levels($key = '', $args = array()) {
 		'list_item_after' => '</li>',
 		'quiet' => false
 	);
-	$args = array_merge($defaults, $args);
+	$args = array_merge($defaults, apply_filters('cfum-get-author-levels-args', $args, $key));
 	extract($args, EXTR_SKIP);
 
 	if (empty($key)) {
@@ -826,6 +826,12 @@ function cfum_get_author_levels($key = '', $args = array()) {
 function cfum_author_levels($key = '',$args = array()) {
 	echo cfum_get_author_levels($key, $args);
 }
+
+function cfum_author_levels_shortcode($atts) {
+	$atts = extract(shortcode_atts(array('key'=>''),$atts));
+	return cfum_get_author_levels($key);
+}
+add_shortcode('cfum','cfum_author_levels_shortcode');
 
 function cfum_get_author_info($author, $args = array()) {
 	$return = '';
@@ -1063,14 +1069,118 @@ function cfum_description_process() {
  *
  */
 
+/**
+ * new WordPress Widget format
+ * Wordpress 2.8 and above
+ * @see http://codex.wordpress.org/Widgets_API#Developing_Widgets
+ */
+class cfum_Widget extends WP_Widget {
+	
+    /**
+     * Constructor
+     *
+     * @return void
+     **/
+	function cfum_Widget() {
+		$widget_ops = array('classname' => 'cfum-widget', 'description' => 'Widget for displaying CF Author Levels lists.');
+		$this->WP_Widget('cfum-widget', 'CF Author Levels', $widget_ops);
+	}
+
+    /**
+     * Outputs the HTML for this widget.
+     *
+     * @param array  An array of standard parameters for widgets in this theme 
+     * @param array  An array of settings for this widget instance 
+     * @return void Echoes it's output
+     **/
+	function widget($args, $instance) {
+		extract($args, EXTR_SKIP);
+		$title = apply_filters('cfum-widget-title', $instance['title'], $instance['list']);
+		$list = apply_filters('cfum-widget-list', $instance['list']);
+
+		if (empty($list) || $list == '0') { return; }
+		
+		$args = apply_filters('cfum-widget-args', array(
+			'show_list_title' => false,
+			'show_list_description' => false,
+			'quiet' => true,
+			'show_author_title' => true,
+			'show_bio' => true,
+			'show_link' => true,
+			'show_image' => false,
+			'show_image_link' => false,		
+			'add_clear_div' => true,
+		), $list);
+		
+		echo $before_widget;
+		if (!empty($title)) {
+			echo $before_title.$title,$after_title;
+		}
+		echo '<div class="cfum_widget">'.cfum_get_author_levels($list, $args).'</div>';
+		echo $after_widget;
+	}
+
+    /**
+     * Deals with the settings when they are saved by the admin. Here is
+     * where any validation should be dealt with.
+     *
+     * @param array  An array of new settings as submitted by the admin
+     * @param array  An array of the previous settings 
+     * @return array The validated and (if necessary) amended settings
+     **/
+	function update($new_instance, $old_instance) {
+		$instance = $old_instance;
+		$instance['title'] = strip_tags($new_instance['title']);
+		$instance['list'] = strip_tags($new_instance['list']);
+		return $instance;
+	}
+
+    /**
+     * Displays the form for this widget on the Widgets page of the WP Admin area.
+     *
+     * @param array  An array of the current settings for this widget
+     * @return void Echoes it's output
+     **/
+	function form($instance) {
+		$instance = wp_parse_args((array) $instance, array('title' => '', 'list' => ''));
+		$title = esc_attr($instance['title']);
+		$author_levels = cfum_get_levels(false);
+		?>
+		<p>
+			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label>
+			<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
+		</p>
+		<p>
+			<label for="<?php echo $this->get_field_id('list'); ?>"><?php _e('List:')?></label>
+			<select id="<?php echo $this->get_field_id('list'); ?>" name="<?php echo $this->get_field_name('list'); ?>" class="widefat">
+				<option value="0"<?php selected($instance['list'], '0'); ?>><?php _e('Select List:'); ?></option>
+				<?php
+				if (is_array($author_levels) && !empty($author_levels)) {
+					foreach ($author_levels as $key => $data) {
+						?>
+						<option value="<?php echo attribute_escape($key); ?>"<?php selected($instance['list'], attribute_escape($key)); ?>><?php echo attribute_escape($data['title']); ?></option>
+						<?php
+					}
+				}
+				?>
+			</select>
+		</p>
+		<p>
+			<a href="<?php echo admin_url('users.php?page=cf-author-levels.php'); ?>"><?php _e('Edit Author Lists','cfsp') ?></a>
+		</p>
+		<?php
+	}
+}
+add_action('widgets_init', create_function('', "register_widget('cfum_Widget');"));
+
 // Registers each instance of our widget on startup
 function cfum_widgets_init() {
 	if (!$options = get_option('cfum_widgets'))
 		$options = array();
 
-	$widget_ops = array('classname' => 'cfum_widgets', 'description' => __('Make Widgets from Author Levels Lists.'));
+	$widget_ops = array('classname' => 'cfum_widgets', 'description' => __('Make Widgets from Author Levels Lists. (Version 1.0, please use the new version)'));
 	$control_ops = array('width' => 250, 'height' => 350, 'id_base' => 'cfum_widgets');
-	$name = __('CF Author Levels');
+	$name = __('CF Author Levels 1.0');
 
 	$registered = false;
 	foreach(array_keys($options) as $o) {

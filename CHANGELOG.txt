@@ -1,5 +1,10 @@
 # CF Author Levels Changelog
 
+## 1.3.3
+
+- Adding "cfum" shortcode
+- Adding WordPress 3.0 compatible widget
+
 ## 1.3.2
 
 - Fixing a stupid bug with IE and innerHTML. Moved a display none to the wrapping div.
