@@ -916,7 +916,7 @@ function cfum_get_author_info($author, $args = array()) {
 			if($show_link) {
 				$return .= '
 					<p class="authorlink authorlink-'.$author.'">
-						'.__('View ','cfum_author_lvl').'<a href="'.esc_attr($posts_url).'">'.__('articles by ','cfum_author_lvls').esc_html($display_name).'</a>
+						'.__('View ','cfum_author_lvl').'<a rel="author" href="'.esc_attr($posts_url).'">'.__('articles by ','cfum_author_lvls').esc_html($display_name).'</a>
 					</p>
 				';
 			}
