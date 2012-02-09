@@ -1,5 +1,9 @@
 # CF Author Levels Changelog
 
+## 1.3.4
+
+- Adding rel="author" to author links
+
 ## 1.3.3
 
 - Adding "cfum" shortcode

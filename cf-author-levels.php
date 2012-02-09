@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.3.3
+Version: 1.3.4
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -12,7 +12,7 @@ Author URI: http://crowdfavorite.com
 
 load_plugin_textdomain('cfum_author_lvl');
 
-define('CFUM_VERSION', '1.3.3');
+define('CFUM_VERSION', '1.3.4');
 
 $cfum_allowedtags = array(
 	'a' => array(
