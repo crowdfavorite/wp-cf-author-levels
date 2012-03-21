@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.3.4
+Version: 1.3.5
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -94,7 +94,7 @@ function cfum_request_handler() {
 	
 	// Add the CSS, JS and Proper Meta fields to the proper screens
 	// Note that these functions need to go here since pluggable.php isn't loaded on plugins_loaded.
-	if ((basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' || basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') && current_user_can('unfiltered_html')) {
+	if ((basename($_SERVER['SCRIPT_FILENAME']) == 'profile.php' || basename($_SERVER['SCRIPT_FILENAME']) == 'user-edit.php') && (current_user_can('unfiltered_html') || current_user_can('manage_options'))) {
 		wp_enqueue_script('jquery');
 		wp_enqueue_script('cfum_admin_user_js', trailingslashit(get_bloginfo('url')).'?cf_action=cfum_admin_user_js', 'jquery', CFUM_VERSION, true);
 		wp_enqueue_script('cf-author-levels-ckeditor', plugins_url('cf-author-levels/ckeditor/ckeditor.js'), 'jquery', CFUM_VERSION, true);
