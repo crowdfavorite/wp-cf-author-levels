@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.3.4
+Version: 1.3.5
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
