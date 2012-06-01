@@ -1,5 +1,9 @@
 # CF Author Levels Changelog
 
+## 1.4
+
+- Added short bio functionality to allow for selection of a shorter biography for display where the full bio would be inappropriate
+
 ## 1.3.5
 
 - Adding the ability for "Administrator" users to edit their profile in a WordPress Network instance. Previously only "Super Admin" users could do this.
