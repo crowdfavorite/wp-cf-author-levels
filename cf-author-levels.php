@@ -306,6 +306,9 @@ function cfum_admin_user_js() {
 		CKEDITOR.replace("cfum_bio", {
 			customConfig : "/index.php?cf_action=cfum_ckeditor_toolbar_config"
 		});
+		CKEDITOR.replace("cfum_bio_short", {
+			customConfig : "/index.php?cf_action=cfum_ckeditor_toolbar_config"
+		});
 	});
 	<?php
 	die();
@@ -593,6 +596,24 @@ function cfum_show_user_information() {
 	</tbody>
 	</table>
 	<?php } ?>
+	<?php if (!empty($user_info[sanitize_title(get_bloginfo('name')).'-cfum-short-bio'])) { ?>
+	<table class="form-table">
+	<tbody>
+		<tr>
+			<th>
+				<label for="content"><?php _e('User Bio','cfum_author_lvl') ?></label>
+			</th>
+			<td>
+				<div style="border: 1px solid #DFDFDF;">
+					<div id="cfum-short-bio-container-display">
+						<?php echo $user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio']; ?>
+					</div>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+	<?php } ?>
 	<?php if (!empty($user_info['photo_url']) && !empty($user_info[sanitize_title(get_bloginfo('name')).'feedburner_link'])) { ?>
 		<table class="form-table">
 		<tbody>
@@ -678,6 +699,52 @@ function cfum_show_user_form_fields() {
 				</div>
 			</td>
 		</tr>
+		<tr>
+			<th>
+				<label for="content"><?php _e('Short User Bio','cfum_author_lvl') ?></label>
+			</th>
+			<td>
+				<div style="border: 1px solid #DFDFDF;">
+					<div id="cfum-short-bio-container">
+						<textarea id="cfum_bio_short" class="cfum-short-bio-textarea" name="cfum-short-bio"><?php echo $user_info[sanitize_title(get_bloginfo('name')).'-cfum-short-bio']; ?></textarea>
+					</div>
+					<?php 
+					$other_blog_content = '';
+					if (is_array($user_info) && !empty($user_info)) { 
+						foreach($user_info as $key => $info) {
+							if (strstr($key,'-cfum-short-bio') !== false) {
+								$this_blog_key = sanitize_title(get_bloginfo('name')).'-cfum-short-bio';
+								if ($key != $this_blog_key) {
+									if (!empty($info)) {
+										$other_blog_content .= '
+										<h4 id="'.$key.'-blog">
+											'.str_replace('-cfum-short-bio','',$key).__('\'s bio','cfum_author_lvl').' <a href="#" class="cfum-show-bio" id="show_'.$key.'">'.__('Show','cfum_author_lvl').'</a><a href="#" class="cfum-show-bio" id="hide_'.$key.'" style="display:none;">'.__('Hide','cfum_author_lvl').'</a>
+										</h4>
+										<div id="box-'.$key.'" class="cfum_alternate_bio_short">
+											<div id="'.$key.'">
+												'.$info.'
+											</div>
+											<br />
+											<a href="#" class="cfum-use-this" id="bio-short-'.$key.'">'.__('Use this short bio','cfum_author_lvl').'</a>
+										</div>
+										';
+									}
+								}
+							}
+						}
+					}
+					if (!empty($other_blog_content)) {
+						?>
+						<div id="cfum-short-bio-otherblog">
+							<h3><?php _e('Would you like to use another blog\'s short bio?','cfum_author_lvl'); ?></h3>
+							<?php echo $other_blog_content; ?>
+						</div>
+						<?php
+					}
+					?>
+				</div>
+			</td>
+		</tr>
 	</tbody>
 	</table>
 	<table class="form-table">
@@ -728,6 +795,12 @@ function cfum_profile_edited_by_admin() {
 	}
 	else {
 		$user_info[sanitize_title(get_bloginfo('name')).'-cfum-bio'] = '';
+	}
+	if (isset($_POST['cfum-short-bio'])) {
+		$user_info[sanitize_title(get_bloginfo('name')).'-cfum-short-bio'] = stripslashes($_POST['cfum-short-bio']);
+	}
+	else {
+		$user_info[sanitize_title(get_bloginfo('name')).'-cfum-short-bio'] = '';
 	}
 	return update_usermeta($user_id, 'cfum_user_data', $user_info);
 }
@@ -838,6 +911,7 @@ function cfum_get_author_info($author, $args = array()) {
 	$defaults = array(
 		'show_author_title' => true,
 		'show_bio' => true,
+		'show_short_bio' => false,
 		'show_link' => true,
 		'show_image' => true,
 		'show_image_link' => true,		
@@ -855,6 +929,7 @@ function cfum_get_author_info($author, $args = array()) {
 	$photo_url = apply_filters('cfum_author_photo_url', cfum_get_photo_url($userdata->ID), $author);
 	$posts_url = apply_filters('cfum_author_posts_url', get_author_posts_url($author), $author);
 	$bio = apply_filters('cfum_author_bio', $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio'], $author);
+	$short_bio = apply_filters('cfum_author_short_bio', $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-short-bio'], $author);
 	
 	$return .= '
 		<div id="'.$userdata->user_nicename.'" class="aboutauthor aboutauthor-'.$author.'">';
@@ -880,7 +955,37 @@ function cfum_get_author_info($author, $args = array()) {
 				if ($show_author_title) {
 					$return .= $author_title_before.'<a href="'.esc_attr($posts_url).'">'.esc_html($display_name).'</a>'.$author_title_after;
 				}
-				if($show_bio) {
+				if ($show_short_bio && !empty($short_bio)) {
+					if (function_exists('cfcn_get_context')) {
+						global $cfum_author_id;
+						$cfum_author_id = $author;
+						add_filter('cfcn_context', 'cfum_add_context');
+					}
+					$return .= do_shortcode($short_bio);
+					if (function_exists('cfcn_get_context')) {
+						if (isset($_GET['cfcn_display']) && $_GET['cfcn_display'] == 'true') {
+							$return .= '
+							<div class="cfum-author-bio-context">
+								<p><b>NOTE:</b> The following items have been added to the CF Context for this user bio.</p>
+								<p>
+									Name: cfum_author_id
+									<br />
+									Value: '.$cfum_author_id.'
+								</p>
+								<p>
+									Name: cfum_username
+									<br />
+									Value: '.$userdata->user_login.'
+								</p>
+							</div>
+							';
+						}
+						$context['cfum_author_id'] = $cfum_author_id;
+						$context['cfum_username'] = $userdata->user_login;
+						remove_filter('cfcn_context', 'cfum_add_context');
+					}
+				}
+				else if($show_bio) {
 					if (function_exists('cfcn_get_context')) {
 						global $cfum_author_id;
 						$cfum_author_id = $author;
