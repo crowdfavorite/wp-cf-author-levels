@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.4
+Version: 1.4.1
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -916,6 +916,7 @@ function cfum_get_author_info($author, $args = array()) {
 		'show_image' => true,
 		'show_image_link' => true,		
 		'add_clear_div' => true,
+		'hide_when_empty' => false,
 		'author_title_before' => '<h3 class="authorname authorname-'.$author.'">',
 		'author_title_after' => '</h3>'
 	);
@@ -930,6 +931,7 @@ function cfum_get_author_info($author, $args = array()) {
 	$posts_url = apply_filters('cfum_author_posts_url', get_author_posts_url($author), $author);
 	$bio = apply_filters('cfum_author_bio', $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-bio'], $author);
 	$short_bio = apply_filters('cfum_author_short_bio', $usermeta[sanitize_title(get_bloginfo('name')).'-cfum-short-bio'], $author);
+	$empty_bio = true;
 	
 	$return .= '
 		<div id="'.$userdata->user_nicename.'" class="aboutauthor aboutauthor-'.$author.'">';
@@ -956,6 +958,7 @@ function cfum_get_author_info($author, $args = array()) {
 					$return .= $author_title_before.'<a href="'.esc_attr($posts_url).'">'.esc_html($display_name).'</a>'.$author_title_after;
 				}
 				if ($show_short_bio && !empty($short_bio)) {
+					$empty_bio = false;
 					if (function_exists('cfcn_get_context')) {
 						global $cfum_author_id;
 						$cfum_author_id = $author;
@@ -986,6 +989,7 @@ function cfum_get_author_info($author, $args = array()) {
 					}
 				}
 				else if($show_bio) {
+					$empty_bio = empty($bio);
 					if (function_exists('cfcn_get_context')) {
 						global $cfum_author_id;
 						$cfum_author_id = $author;
@@ -1035,6 +1039,9 @@ function cfum_get_author_info($author, $args = array()) {
 			$return .= '
 		</div>
 	';
+	if ($empty_bio && $hide_when_empty) {
+		$return = '';
+	}
 	return $return;
 }
 

@@ -1,5 +1,8 @@
 # CF Author Levels Changelog
 
+## 1.4.1
+- Added "hide_when_empty" optional parameter (default: false) to prevent display of output if user has no bio.
+
 ## 1.4
 
 - Added short bio functionality to allow for selection of a shorter biography for display where the full bio would be inappropriate
