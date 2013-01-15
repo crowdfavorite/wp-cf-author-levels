@@ -827,7 +827,7 @@ function cfum_update_author_lvls($levels = array()) {
 }
 
 function cfum_update_author_list($lists = array()) {
-	if (!get_option('cfum_author_lists')) {
+	if (get_option('cfum_author_lists') === false) {
 		add_option('cfum_author_lists', $lists, false, 'no');
 	}
 	else {

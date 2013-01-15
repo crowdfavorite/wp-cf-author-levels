@@ -1,5 +1,9 @@
 # CF Author Levels Changelog
 
+## 1.4.2
+- Updated behavior on saving lists options to explicitly check for false,
+  rather than empty values.
+
 ## 1.4.1
 - Added "hide_when_empty" optional parameter (default: false) to prevent display of output if user has no bio.
 
