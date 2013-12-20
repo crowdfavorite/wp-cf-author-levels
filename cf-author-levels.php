@@ -3,7 +3,7 @@
 Plugin Name: CF Author Levels
 Plugin URI: http://crowdfavorite.com
 Description: Advanced options for author levels
-Version: 1.4.2
+Version: 1.4.3
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -12,7 +12,7 @@ Author URI: http://crowdfavorite.com
 
 load_plugin_textdomain('cfum_author_lvl');
 
-define('CFUM_VERSION', '1.4.2');
+define('CFUM_VERSION', '1.4.3');
 
 $cfum_allowedtags = array(
 	'a' => array(
@@ -917,6 +917,7 @@ function cfum_get_author_info($author, $args = array()) {
 		'show_image_link' => true,		
 		'add_clear_div' => true,
 		'hide_when_empty' => false,
+		'set_image_width' => true,
 		'author_title_before' => '<h3 class="authorname authorname-'.$author.'">',
 		'author_title_after' => '</h3>'
 	);
@@ -942,7 +943,11 @@ function cfum_get_author_info($author, $args = array()) {
 						if ($show_image_link) {
 							$return .= '<a href="'.esc_attr($posts_url).'">';
 						}
-						$return .= '<img src="'.esc_attr($photo_url).'" width="80px" alt="Author Image for '.esc_attr($display_name).'" />';
+						$return .= '<img src="'.esc_attr($photo_url).'" ';
+						if ($set_image_width) {
+								$return .= 'width="80px" ';
+						}
+						$return .= 'alt="Author Image for '.esc_attr($display_name).'" />';
 						if ($show_image_link) {
 							$return .= '</a>';
 						}
